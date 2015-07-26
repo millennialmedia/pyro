@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Pyro Core
+Bundle-SymbolicName: com.millennialmedia.pyro;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Millennial Media
+Require-Bundle: org.eclipse.core.resources,
+ org.eclipse.core.runtime
+Export-Package: com.millennialmedia.pyro.model,
+ com.millennialmedia.pyro.model.util
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

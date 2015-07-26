@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Pyro UI
+Bundle-SymbolicName: com.millennialmedia.pyro.ui;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Millennial Media
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.eclipse.jface.text,
+ org.eclipse.ui.editors,
+ com.millennialmedia.pyro;bundle-version="[1.0.0,2.0.0)",
+ org.eclipse.ui.workbench,
+ org.eclipse.ui.ide,
+ org.eclipse.core.resources,
+ org.eclipse.ui.views
+Export-Package: com.millennialmedia.pyro.ui,
+ com.millennialmedia.pyro.ui.contentassist,
+ com.millennialmedia.pyro.ui.editor,
+ com.millennialmedia.pyro.ui.editor.util,
+ com.millennialmedia.pyro.ui.hyperlink
+Bundle-Activator: com.millennialmedia.pyro.ui.PyroUIPlugin
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

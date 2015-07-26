@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="modelPostProcessor" name="modelPostProcessor" schema="schema/modelPostProcessor.exsd"/>
+   
+   <extension point="com.millennialmedia.pyro.modelPostProcessor">
+     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.TestCaseTemplatePostProcessor" priority="5" />
+     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.SetupTeardownPostProcessor" priority="10" />
+     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.BuiltInKeywordArgumentsPostProcessor" priority="15" />
+     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.ForLoopPostProcessor" priority="20" />
+     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.LibraryPostProcessor" priority="25" />
+   </extension>
+   
+</plugin>

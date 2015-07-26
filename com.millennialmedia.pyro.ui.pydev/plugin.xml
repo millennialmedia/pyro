@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="com.millennialmedia.pyro.ui.hyperlinkDetector">
+      <detector class="com.millennialmedia.pyro.ui.pydev.internal.hyperlink.PythonUserLibraryKeywordDefinitionHyperlinkDetector" priority="3" />
+      <detector class="com.millennialmedia.pyro.ui.pydev.internal.hyperlink.PythonStandardLibraryKeywordDefinitionHyperlinkDetector" priority="4" />
+      <detector class="com.millennialmedia.pyro.ui.pydev.internal.hyperlink.PythonLibraryHyperlinkDetector" priority="10" />
+   </extension>
+   <extension
+         point="com.millennialmedia.pyro.ui.contentAssistProcessor">
+      <processor class="com.millennialmedia.pyro.ui.pydev.internal.contentassist.PythonUserLibraryKeywordAssistContributor" priority="7" />
+      <processor class="com.millennialmedia.pyro.ui.pydev.internal.contentassist.PythonStandardLibraryKeywordAssistContributor" priority="8" />
+   </extension>
+   <extension
+         point="com.millennialmedia.pyro.ui.searchPathContributor">
+      <contributor class="com.millennialmedia.pyro.ui.pydev.internal.PythonSearchPathContributor" priority="5" />
+   </extension>
+</plugin>

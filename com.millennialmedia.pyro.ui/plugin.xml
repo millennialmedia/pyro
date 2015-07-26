@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension-point id="hyperlinkDetector" name="hyperlinkDetector" schema="schema/hyperlinkDetector.exsd"/>
+   <extension-point id="contentAssistProcessor" name="contentAssistProcessor" schema="schema/contentAssistProcessor.exsd"/>
+   <extension-point id="searchPathContributor" name="searchPathContributor" schema="schema/searchPathContributor.exsd"/>
+
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="com.millennialmedia.pyro.ui.editor.RobotFrameworkEditor"
+            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+            extensions="tsv,txt,robot"
+            icon="icons/pyro.png"
+            id="com.millennialmedia.pyro.ui.editor.RobotFrameworkEditor"
+            name="Robot Framework Editor">
+      </editor>
+   </extension>
+   
+   <extension
+         point="com.millennialmedia.pyro.ui.hyperlinkDetector">
+      <detector class="com.millennialmedia.pyro.ui.internal.hyperlink.LocalKeywordDefinitionHyperlinkDetector" priority="1" />
+      <detector class="com.millennialmedia.pyro.ui.internal.hyperlink.ResourceFileKeywordDefinitionHyperlinkDetector" priority="2" />
+      <detector class="com.millennialmedia.pyro.ui.internal.hyperlink.ResourceFileHyperlinkDetector" priority="8" />
+   </extension>
+   
+   <extension
+         point="com.millennialmedia.pyro.ui.contentAssistProcessor">
+         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.LocalKeywordAssistContributor" priority="5" />
+         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.ResourceFileKeywordAssistContributor" priority="6" />
+         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.SettingsAssistContributor" priority="1" />
+         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.TableNameAssistContributor" priority="15" />
+         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.VariableArgumentAssistContributor" priority="20" />
+   </extension>
+
+   <!-- force the visibility of the Show Whitespace Characters action in the main toolbar when Pyro is the active editor  -->
+   <extension
+         point="org.eclipse.ui.actionSetPartAssociations">
+      <actionSetPartAssociation
+            targetID="org.eclipse.ui.edit.text.actionSet.presentation">
+         <part
+               id="com.millennialmedia.pyro.ui.editor.RobotFrameworkEditor">
+         </part>
+      </actionSetPartAssociation>
+   </extension>
+      
+
+</plugin>

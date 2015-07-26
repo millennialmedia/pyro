@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/pyro.feature_1.0.0.jar" id="com.millennialmedia.pyro.feature" version="0.0.0">
+      <category name="pyro"/>
+   </feature>
+   <category-def name="pyro" label="Pyro Robot Framework Editor"/>
+</site>

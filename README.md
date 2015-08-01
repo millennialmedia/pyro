@@ -1,17 +1,14 @@
 # Introduction
-Pyro is an abbreviation for "**PY**thon-aware **RO**bot" editor.  It is a set of Eclipse plugins for developing automated testing code using the [Robot Framework](http://robotframework.org/).  The Python awareness comes from a tight integration into the popular [PyDev](http://pydev.org/) development tools for Eclipse.  All the typical Eclipse editing capabilities are present in this Robot editor, including: syntax coloring, content assist, hyperlinking to local and external resources, Outline view integration, etc.
+Pyro is an abbreviation for "**PY**thon-aware **RO**bot" editor.  This is a set of Eclipse plugins for developing automated testing code using the [Robot Framework](http://robotframework.org/).  Python awareness comes from a tight integration into the popular [PyDev](http://pydev.org/) development tools for Eclipse.  Many typical Eclipse capabilities are present in this Robot editor, including: syntax coloring, content assist, hyperlinking to local and external resources, Outline view integration, etc.
 
+# Installation
+* Pyro can be installed via [this update site](https://github.com/millennialmedia/pyro/raw/updatesite) using the Help->Install New Software... action in Eclipse.
 
-# Quick start
-The build process uses Eclipse Tycho to enable a simple Maven build (Maven 3.0 minimum).  Create a local update site zip for Pyro from the current plugin codebase by running a Maven build on the root "pyro" project.
-
-* From the pyro folder, run "mvn install"
-* After the build completes, the local Eclipse update site can be found at: **com.millennialmedia.pyro.site/target/com.millennialmedia.pyro.site-[version].zip**.  
-* Install Pyro into Eclipse via the usual Help->Install New Software... action.
 * For full Python support, also make sure to separately install PyDev from the [PyDev update site](http://pydev.org/updates/).
+
 * Restart Eclipse
 
-* Now open a Robot source file using Pyro's editor, simply called _Robot Framework Editor_ within Eclipse.  It is contributed as a default editor for the ".robot", ".txt", and ".tsv" file extensions.  In cases of collisions with other editors, you can always choose from the Open With-> menu option. 
+* Now open a Robot source file using Pyro's editor, which is simply called _Robot Framework Editor_ within Eclipse.  It is contributed as a default editor for the ".robot", ".txt", and ".tsv" file extensions.  In cases of collisions with other editors, you can always choose from the Open With-> menu option.   
 
 
 # Project setup
@@ -31,7 +28,7 @@ For a new or existing Eclipse project containing Robot Framework test sources:
 # Features
 Pyro derives from all the standard text editing frameworks in Eclipse so expected behaviors should generally "just work".  Some interesting features of particular note:
 
-## Hyperlinking
+### Hyperlinking
 ###### Keywords
 Tracing through keyword invocations across complex libraries was the initial motivation for building this project.  Pyro evaluates possible target keywords using the same order as the Robot runtime:
 
@@ -50,7 +47,7 @@ Opens an editor on external referenced Robot source files
 
 
 
-## Content assist
+### Content assist
 Press Ctrl/Cmd-Space to display content assist proposals from the current cursor location.
 
 ###### Keyword names
@@ -71,12 +68,19 @@ At any given location, variable scopes are evaluated to present possible options
 
 
 
-## Outline view
+### Outline view
 The Outline view presents a tree view that is synced with the editor selection to help navigate larger Robot source files.  There are two toggle buttons on the view toolbar:
 * Tree mode toggle to switch between a flattened view of keywords, settings, testcases, and variables or a Table-centric hierarchy
 * A->Z button to toggle alphabetical vs. natural source ordering of elements
 
 
+
+# Building from source
+The build process uses Eclipse Tycho to enable a simple Maven build (Maven 3.0 minimum).  Create a local update site zip for Pyro from the current plugin codebase by running a Maven build on the root "pyro" project.
+
+* From the pyro folder, run "mvn install"
+* After the build completes, the local Eclipse update site can be found at: **com.millennialmedia.pyro.site/target/com.millennialmedia.pyro.site-[version].zip**.  
+* Install Pyro into Eclipse via the usual Help->Install New Software... action and follow the rest of the installation and project setup directions above.
 
 
     
@@ -84,8 +88,10 @@ The Outline view presents a tree view that is synced with the editor selection t
 Three submodule Eclipse plugins define the runtime editor, each ending in the following suffixes:
 
     .pyro           - file parser and common model utilities
-    .pyro.ui        - core editor code, definitions for extension points, and implementation of basic Robot behaviors
-    .pyro.ui.pydev  - the (optional) PyDev integration code - if PyDev is also installed then python linking/searching will work
+    .pyro.ui        - core editor code, definitions for extension points, and 
+                      implementation of basic Robot behaviors
+    .pyro.ui.pydev  - the (optional) PyDev integration code - if PyDev is also 
+                      installed then python linking/searching will work
 
 Additional subprojects are:
 

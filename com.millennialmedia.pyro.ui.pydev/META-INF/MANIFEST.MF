@@ -14,9 +14,9 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.ide,
  org.eclipse.core.resources,
  org.eclipse.ui.views,
- org.python.pydev.core;bundle-version="3.0.0",
- org.python.pydev;bundle-version="3.0.0",
- org.python.pydev.parser;bundle-version="3.0.0"
+ org.python.pydev.core;bundle-version="3.0.0";resolution:=optional,
+ org.python.pydev;bundle-version="3.0.0";resolution:=optional,
+ org.python.pydev.parser;bundle-version="3.0.0";resolution:=optional
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: com.millennialmedia.pyro.ui.pydev.internal.PyroPyDevPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

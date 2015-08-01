@@ -5,8 +5,8 @@
   <artifactId>pyro</artifactId>
   <version>1.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
-  <name>Pyro Parent</name>
-  <description>Pyro Parent Project - this contains the projects for Pyro's Eclipse plugins, tests, feature, and update site</description>
+  <name>Pyro</name>
+  <description>Pyro Project - this parent project contains the submodules for Pyro's Eclipse plugins, tests, feature, and update site</description>
 
   <prerequisites>
     <maven>3.0</maven>

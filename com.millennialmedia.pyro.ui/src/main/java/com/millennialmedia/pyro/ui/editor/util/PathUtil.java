@@ -1,5 +1,6 @@
 package com.millennialmedia.pyro.ui.editor.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -11,8 +12,10 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 
@@ -60,19 +63,19 @@ public class PathUtil {
 		if (sanitizedPath.contains("${CURDIR}")) {
 			int index = sanitizedPath.lastIndexOf("${CURDIR}");
 			if (index < sanitizedPath.length() - 10) {
-				target = getEditorFile(editor).getParent().findMember(sanitizedPath.substring(index + 10));
+				target = findMember(getEditorFile(editor).getParent(), sanitizedPath.substring(index + 10));
 			}
 		} else if (!sanitizedPath.startsWith("/")) {
 			// relative path
 			// first look relative to the current file's location
-			target = getEditorFile(editor).getParent().findMember(sanitizedPath);
+			target = findMember(getEditorFile(editor).getParent(), sanitizedPath);
 			if (target == null || !target.exists()) {
 				target = null;
 				// look for the resource relative to any search paths in the
 				// project (i.e. the source folders in the PYTHONPATH)
 				for (IResource resource : getSearchPaths(editor)) {
 					if (resource instanceof IContainer) {
-						target = ((IContainer) resource).findMember(sanitizedPath);
+						target = findMember((IContainer) resource, sanitizedPath);
 						if (target != null && target.exists()) {
 							break;
 						}
@@ -81,6 +84,11 @@ public class PathUtil {
 			}
 		} else {
 			// absolute path
+			File rawFile = new File(sanitizedPath);
+			if (rawFile.exists()) {
+				// to avoid case-sensitivity issues in Eclipse's Resource API
+				sanitizedPath = rawFile.getPath();
+			}
 			target = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(new Path(sanitizedPath));
 		}
 
@@ -90,6 +98,49 @@ public class PathUtil {
 		return null;
 	}
 
+	private static IResource findMember(IContainer container, String path) {
+		// even though the filesystem is case-insensitive on Windows, Eclipse's Resource
+		// APIs only find files in a case-sensitive manner.  since Robot does not do
+		// this at runtime, we'll need to lessen the restriction by doing a more
+		// expensive segment-by-segment comparison here
+		if (Platform.OS_WIN32.equals(Platform.getOS())) {
+			List<String> segments = getPathSegments(path);
+			while (!segments.isEmpty()) {
+				String nextSegment = segments.remove(0);
+				
+				if ("..".equals(nextSegment)) {
+					container = container.getParent();
+				} else if (".".equals(nextSegment)) {
+					continue;
+				} else {
+					try {
+						IResource[] members = container.members();
+						for (IResource member : members) {
+							if(nextSegment.equalsIgnoreCase(member.getName())) {
+								if (member instanceof IContainer) {
+									// found the next folder in the path, continue
+									container = (IContainer) member;
+									break;
+								} else if (segments.isEmpty()) {
+									// leaf node, this is the file we're looking for
+									return member;
+								}
+							}
+						}
+					} catch (CoreException e) {
+						// do nothing, we'll just return a null for this path below
+					}
+				}
+			}
+
+			// error condition - for a malformed or non-existent path we return nothing
+			return null;
+		} else {
+			// non-windows OS - simple Eclipse API works well
+			return container.findMember(path);
+		}
+	}
+		
 	private static List<IResource> getSearchPaths(RobotFrameworkEditor editor) {
 		List<AbstractSearchPathContributor> contributors = searchPathContributorMap.get(editor);
 		if (contributors == null) {
@@ -127,7 +178,18 @@ public class PathUtil {
 		} else if (pathString.contains("/")) {
 			return new ArrayList<String>(Arrays.asList(pathString.split("/")));
 		} else if (pathString.contains(".")) {
-			return new ArrayList<String>(Arrays.asList(pathString.split("\\.")));
+			// split on a dot, which may be relevant for fully-qualified keyword naming.
+			// but if the last segment is the file extension of one of the known robot
+			// resource file types, concatenate that back onto the filename segment
+			List<String> result = new ArrayList<String>(Arrays.asList(pathString.split("\\.")));
+			String lastSegment = result.get(result.size()-1);
+			if ("robot".equalsIgnoreCase(lastSegment) || 
+					"txt".equalsIgnoreCase(lastSegment) ||
+					"tsv".equalsIgnoreCase(lastSegment)) {
+				result.add(result.size()-2, result.get(result.size()-2)+"."+lastSegment);
+				result = result.subList(0, result.size()-2);
+			}
+			return result;
 		} else {
 			return new ArrayList<String>(Arrays.asList(new String[] { pathString }));
 		}

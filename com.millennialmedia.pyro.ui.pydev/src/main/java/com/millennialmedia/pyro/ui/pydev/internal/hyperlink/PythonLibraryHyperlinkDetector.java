@@ -75,7 +75,7 @@ public class PythonLibraryHyperlinkDetector extends AbstractRobotHyperlinkDetect
 							&& !segment.getValue().equalsIgnoreCase("Library")) {
 						return null;
 					}
-					if (segment.getSegmentType() == SegmentType.ARGUMENT
+					if (segment.getSegmentType() == SegmentType.SETTING_VALUE
 							&& lineOffset + segment.getOffsetInLine() <= linkOffset
 							&& lineOffset + segment.getOffsetInLine() + segment.getValue().length() >= linkOffset) {
 

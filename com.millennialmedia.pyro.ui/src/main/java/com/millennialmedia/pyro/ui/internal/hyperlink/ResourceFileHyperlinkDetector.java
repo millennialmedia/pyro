@@ -81,7 +81,7 @@ public class ResourceFileHyperlinkDetector extends AbstractRobotHyperlinkDetecto
 							&& !segment.getValue().equalsIgnoreCase("Resource")) {
 						return null;
 					}
-					if (segment.getSegmentType() == SegmentType.ARGUMENT
+					if (segment.getSegmentType() == SegmentType.SETTING_VALUE
 							&& lineOffset + segment.getOffsetInLine() <= linkOffset
 							&& lineOffset + segment.getOffsetInLine() + segment.getValue().length() >= linkOffset) {
 

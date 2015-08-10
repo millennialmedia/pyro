@@ -60,31 +60,35 @@ public class PyDevUtil {
 
 		Map<String, ModuleInfo> moduleMap = new HashMap<String, ModuleInfo>();
 		PythonNature nature = PythonNature.getPythonNature(project);
-		IPythonPathNature pathNature = nature.getPythonPathNature();
-
-		for (String libraryName : libraryNames) {
-			try {
-				if (libraryName.contains("${CURDIR}")) {
-					ModuleInfo info = getModuleInfo(libraryName, sourceFile.getLocation().removeLastSegments(1)
-							.toOSString(), libraryName.substring(libraryName.lastIndexOf("${CURDIR}") + 9));
-					if (info != null) {
-						moduleMap.put(libraryName, info);
-					}
-				} else {
-					// search across the in-project source folders from the
-					// pythonpath
-					Set<IResource> pythonResources = pathNature.getProjectSourcePathFolderSet();
-					for (IResource resource : pythonResources) {
-						ModuleInfo info = getModuleInfo(libraryName, resource.getLocation().toOSString(), libraryName);
+		if (nature != null) {
+			IPythonPathNature pathNature = nature.getPythonPathNature();
+			
+			for (String libraryName : libraryNames) {
+				try {
+					if (libraryName.contains("${CURDIR}")) {
+						ModuleInfo info = getModuleInfo(libraryName, 
+								sourceFile.getLocation().removeLastSegments(1).toOSString(), 
+								libraryName.substring(libraryName.lastIndexOf("${CURDIR}") + 9));
 						if (info != null) {
 							moduleMap.put(libraryName, info);
-							break;
+						}
+					} else {
+						// search across the in-project source folders from the pythonpath
+						if (pathNature != null) {
+							Set<IResource> pythonResources = pathNature.getProjectSourcePathFolderSet();
+							for (IResource resource : pythonResources) {
+								ModuleInfo info = getModuleInfo(libraryName, resource.getLocation().toOSString(), libraryName);
+								if (info != null) {
+									moduleMap.put(libraryName, info);
+									break;
+								}
+							}
 						}
 					}
-				}
 
-			} catch (CoreException e) {
-				e.printStackTrace();
+				} catch (CoreException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 
@@ -96,35 +100,36 @@ public class PyDevUtil {
 		IProject project = sourceFile.getProject();
 
 		PythonNature nature = PythonNature.getPythonNature(project);
-
-		try {
-			List<String> interpreterPaths = nature.getProjectInterpreter().getPythonPath();
-			String standardLibPath = null;
-			for (String path : interpreterPaths) {
-				// some hacky stuff here to distinguish how macos and windows include
-				// robot in their interpreter paths - this may have also changed a bit
-				// across pydev versions, so try several ways
-				if (path.contains("robot")) {
-					if (path.endsWith(".egg")) {
-						standardLibPath = path + "/robot/libraries";
-					} else {
-						standardLibPath = path + "/libraries";
-					}
-					break;
-				} else if (path.contains("site-packages")) {
-					File checkFile = new File(path + "/robot/libraries");
-					if (checkFile.exists()) {
-						standardLibPath = path + "/robot/libraries";
+		if (nature != null) {
+			try {
+				List<String> interpreterPaths = nature.getProjectInterpreter().getPythonPath();
+				String standardLibPath = null;
+				for (String path : interpreterPaths) {
+					// some hacky stuff here to distinguish how macos and windows include
+					// robot in their interpreter paths - this may have also changed a bit
+					// across pydev versions, so try several ways
+					if (path.contains("robot")) {
+						if (path.endsWith(".egg")) {
+							standardLibPath = path + "/robot/libraries";
+						} else {
+							standardLibPath = path + "/libraries";
+						}
+						break;
+					} else if (path.contains("site-packages")) {
+						File checkFile = new File(path + "/robot/libraries");
+						if (checkFile.exists()) {
+							standardLibPath = path + "/robot/libraries";
+						}
 					}
 				}
-			}
 
-			ModuleInfo info = getModuleInfo(libraryName, standardLibPath, libraryName);
-			return info;
-		} catch (MisconfigurationException e) {
-			e.printStackTrace();
-		} catch (PythonNatureWithoutProjectException e) {
-			e.printStackTrace();
+				ModuleInfo info = getModuleInfo(libraryName, standardLibPath, libraryName);
+				return info;
+			} catch (MisconfigurationException e) {
+				e.printStackTrace();
+			} catch (PythonNatureWithoutProjectException e) {
+				e.printStackTrace();
+			}
 		}
 		return null;
 	}

@@ -3,6 +3,7 @@ package com.millennialmedia.pyro.ui.pydev.internal;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,9 @@ import org.python.pydev.plugin.PydevPlugin;
 import org.python.pydev.plugin.nature.PythonNature;
 import org.python.pydev.shared_core.structure.Tuple;
 
-import com.millennialmedia.pyro.ui.editor.RobotFrameworkEditor;
+import com.millennialmedia.pyro.model.ModelManager;
+import com.millennialmedia.pyro.model.RobotModel;
+import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 
 /**
@@ -54,8 +57,43 @@ public class PyDevUtil {
 		return standardLibsMap;
 	}
 
-	public static Map<String, ModuleInfo> findModules(List<String> libraryNames, RobotFrameworkEditor editor) {
-		IFile sourceFile = PathUtil.getEditorFile(editor);
+	public static Map<String, ModuleInfo> findAllReferencedLibraryModules(IFile sourceFile) {
+		Map<String, ModuleInfo> libraryModuleMap = new HashMap<String, ModuleInfo>();
+		List<IFile> filesVisited = new ArrayList<IFile>();
+		
+		// traverse all resource file dependencies recursively and pull in additional library references from them too
+		addTransitiveReferencedLibraryModules(libraryModuleMap, filesVisited, sourceFile);
+		
+		return libraryModuleMap;
+	}
+	
+	private static void addTransitiveReferencedLibraryModules(Map<String, ModuleInfo> libraryModuleMap, List<IFile> filesVisited, IFile referencedFile) {
+		// add library references from the local file
+		List<String> libraries = ModelUtil.getLibraries(ModelManager.getManager().getModel(referencedFile));
+		Map<String, ModuleInfo> additionalLibrariesModuleMap = PyDevUtil.findModules(libraries, referencedFile);
+
+		libraryModuleMap.putAll(additionalLibrariesModuleMap);
+
+		filesVisited.add(referencedFile);
+		
+		// now check any referenced resource files
+		RobotModel targetModel = ModelManager.getManager().getModel(referencedFile);
+		List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(targetModel);
+
+		for (String resourceFilePath : resourceFilePaths) {
+			IResource resource = PathUtil.getResourceForPath(referencedFile, resourceFilePath);
+			if (resource != null && resource instanceof IFile) {
+				IFile targetFile = (IFile) resource;
+				// avoid cycles, but otherwise recursively add additional library modules
+				if (!filesVisited.contains(targetFile)) {
+					addTransitiveReferencedLibraryModules(libraryModuleMap, filesVisited, targetFile);
+				}
+			}
+		}
+	}
+	
+	
+	public static Map<String, ModuleInfo> findModules(List<String> libraryNames, IFile sourceFile) {
 		IProject project = sourceFile.getProject();
 
 		Map<String, ModuleInfo> moduleMap = new HashMap<String, ModuleInfo>();
@@ -95,8 +133,7 @@ public class PyDevUtil {
 		return moduleMap;
 	}
 
-	public static ModuleInfo findStandardLibModule(String libraryName, RobotFrameworkEditor editor) {
-		IFile sourceFile = PathUtil.getEditorFile(editor);
+	public static ModuleInfo findStandardLibModule(String libraryName, IFile sourceFile) {
 		IProject project = sourceFile.getProject();
 
 		PythonNature nature = PythonNature.getPythonNature(project);

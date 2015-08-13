@@ -3,7 +3,6 @@ package com.millennialmedia.pyro.ui.pydev.internal;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -11,7 +10,6 @@ import org.python.pydev.core.IPythonPathNature;
 import org.python.pydev.plugin.nature.PythonNature;
 
 import com.millennialmedia.pyro.ui.editor.util.AbstractSearchPathContributor;
-import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 
 /**
  * The contributed implementation of Pyro's search path contributor which passes
@@ -23,8 +21,7 @@ public class PythonSearchPathContributor extends AbstractSearchPathContributor {
 
 	@Override
 	public List<IResource> getSearchPaths() {
-		IFile sourceFile = PathUtil.getEditorFile(getEditor());
-		IProject project = sourceFile.getProject();
+		IProject project = getFile().getProject();
 		PythonNature nature = PythonNature.getPythonNature(project);
 		if (nature != null) {
 			IPythonPathNature pathNature = nature.getPythonPathNature();

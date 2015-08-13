@@ -5,7 +5,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.text.IRegion;
 import org.eclipse.jface.text.ITextViewer;
 import org.eclipse.jface.text.Region;
@@ -16,6 +18,8 @@ import org.python.pydev.editor.actions.PyOpenAction;
 import org.python.pydev.editor.model.ItemPointer;
 import org.python.pydev.shared_core.structure.Location;
 
+import com.millennialmedia.pyro.model.ModelManager;
+import com.millennialmedia.pyro.model.RobotModel;
 import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 import com.millennialmedia.pyro.ui.hyperlink.AbstractKeywordDefinitionHyperlinkDetector;
@@ -43,7 +47,9 @@ public class PythonStandardLibraryKeywordDefinitionHyperlinkDetector extends Abs
 		final Map<String, Integer> candidateCallStrings = ModelUtil.getCandidateKeywordStrings(keywordCallContext
 				.getKeywordName());
 		Map<String, List<String>> standardLibsMap = PyDevUtil.getStandardLibsMap();
-		List<String> referencedLibraries = new ArrayList<String>(ModelUtil.getLibraries(getEditor().getModel()));
+		List<String> referencedLibraries = new ArrayList<String>();
+		List<IFile> filesVisited = new ArrayList<IFile>();
+		collectReferencedLibraryNames(referencedLibraries, filesVisited, PathUtil.getEditorFile(getEditor()));
 		referencedLibraries.add("BuiltIn");
 
 		for (String libraryName : referencedLibraries) {
@@ -51,7 +57,7 @@ public class PythonStandardLibraryKeywordDefinitionHyperlinkDetector extends Abs
 				continue;
 			}
 
-			ModuleInfo moduleInfo = PyDevUtil.findStandardLibModule(libraryName, getEditor());
+			ModuleInfo moduleInfo = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(getEditor()));
 			if (moduleInfo == null) {
 				return null;
 			}
@@ -130,4 +136,25 @@ public class PythonStandardLibraryKeywordDefinitionHyperlinkDetector extends Abs
 		return null;
 	}
 
+	private void collectReferencedLibraryNames(List<String> libraryNames, List<IFile> filesVisited, IFile sourceFile) {
+		filesVisited.add(sourceFile);
+		RobotModel model = ModelManager.getManager().getModel(sourceFile);
+		libraryNames.addAll(ModelUtil.getLibraries(model));
+		
+		// now check any referenced resource files
+		List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(model);
+
+		for (String resourceFilePath : resourceFilePaths) {
+			IResource resource = PathUtil.getResourceForPath(sourceFile, resourceFilePath);
+			if (resource != null && resource instanceof IFile) {
+				IFile targetFile = (IFile) resource;
+				// avoid cycles, but otherwise recursively add additional library modules
+				if (!filesVisited.contains(targetFile)) {
+					collectReferencedLibraryNames(libraryNames, filesVisited, targetFile);
+				}
+			}
+		}
+
+	}
+	
 }

@@ -43,7 +43,7 @@ public class PythonUserLibraryKeywordAssistContributor extends KeywordAssistCont
 		if (keywordFragments != null) {
 			// get any Library imports
 			List<String> libraries = ModelUtil.getLibraries(getEditor().getModel());
-			Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, getEditor());
+			Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, PathUtil.getEditorFile(getEditor()));
 
 			if (!libraries.isEmpty()) {
 				for (String libraryName : libraries) {

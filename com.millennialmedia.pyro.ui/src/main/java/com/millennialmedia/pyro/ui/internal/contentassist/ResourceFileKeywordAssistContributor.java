@@ -38,7 +38,6 @@ public class ResourceFileKeywordAssistContributor extends KeywordAssistContribut
 		if (keywordFragments != null) {
 			// get any files referenced by a Resource setting
 			List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(getEditor().getModel());
-			Collections.sort(resourceFilePaths);
 
 			if (!resourceFilePaths.isEmpty()) {
 				IFile file = PathUtil.getEditorFile(getEditor());
@@ -48,7 +47,7 @@ public class ResourceFileKeywordAssistContributor extends KeywordAssistContribut
 					if (rootPath != null) {
 						// for each resource file in the Settings table(s)
 						for (String resourceFilePath : resourceFilePaths) {
-							IResource resource = PathUtil.getResourceForPath(getEditor(), resourceFilePath);
+							IResource resource = PathUtil.getResourceForPath(file, resourceFilePath);
 
 							if (resource != null && resource instanceof IFile) {
 								IFile targetFile = (IFile) resource;

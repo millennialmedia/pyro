@@ -29,7 +29,7 @@ import com.millennialmedia.pyro.ui.internal.registry.SearchPathContributorRegist
  * @author spaxton
  */
 public class PathUtil {
-	private static Map<RobotFrameworkEditor, List<AbstractSearchPathContributor>> searchPathContributorMap = new WeakHashMap<RobotFrameworkEditor, List<AbstractSearchPathContributor>>();
+	private static Map<IFile, List<AbstractSearchPathContributor>> searchPathContributorMap = new WeakHashMap<IFile, List<AbstractSearchPathContributor>>();
 
 	private PathUtil() {
 	}
@@ -57,23 +57,23 @@ public class PathUtil {
 		return null;
 	}
 
-	public static IResource getResourceForPath(RobotFrameworkEditor editor, String path) {
+	public static IResource getResourceForPath(IFile currentFile, String relativePath) {
 		IResource target = null;
-		String sanitizedPath = replaceBuiltInSlashVars(path);
+		String sanitizedPath = replaceBuiltInSlashVars(relativePath);
 		if (sanitizedPath.contains("${CURDIR}")) {
 			int index = sanitizedPath.lastIndexOf("${CURDIR}");
 			if (index < sanitizedPath.length() - 10) {
-				target = findMember(getEditorFile(editor).getParent(), sanitizedPath.substring(index + 10));
+				target = findMember(currentFile.getParent(), sanitizedPath.substring(index + 10));
 			}
 		} else if (!sanitizedPath.startsWith("/")) {
 			// relative path
 			// first look relative to the current file's location
-			target = findMember(getEditorFile(editor).getParent(), sanitizedPath);
+			target = findMember(currentFile.getParent(), sanitizedPath);
 			if (target == null || !target.exists()) {
 				target = null;
 				// look for the resource relative to any search paths in the
 				// project (i.e. the source folders in the PYTHONPATH)
-				for (IResource resource : getSearchPaths(editor)) {
+				for (IResource resource : getSearchPaths(currentFile)) {
 					if (resource instanceof IContainer) {
 						target = findMember((IContainer) resource, sanitizedPath);
 						if (target != null && target.exists()) {
@@ -141,18 +141,18 @@ public class PathUtil {
 		}
 	}
 		
-	private static List<IResource> getSearchPaths(RobotFrameworkEditor editor) {
-		List<AbstractSearchPathContributor> contributors = searchPathContributorMap.get(editor);
+	private static List<IResource> getSearchPaths(IFile file) {
+		List<AbstractSearchPathContributor> contributors = searchPathContributorMap.get(file);
 		if (contributors == null) {
-			Collection<AbstractSearchPathContributor> registeredContributors = SearchPathContributorRegistryReader
-					.getReader().getContributors();
+			Collection<AbstractSearchPathContributor> registeredContributors = 
+					SearchPathContributorRegistryReader.getReader().getContributors();
 			contributors = new ArrayList<AbstractSearchPathContributor>();
 			for (AbstractSearchPathContributor contributor : registeredContributors) {
 				AbstractSearchPathContributor newContributor = (AbstractSearchPathContributor) contributor.clone();
-				newContributor.setEditor(editor);
+				newContributor.setFile(file);
 				contributors.add(newContributor);
 			}
-			searchPathContributorMap.put(editor, contributors);
+			searchPathContributorMap.put(file, contributors);
 		}
 
 		List<IResource> searchPaths = new ArrayList<IResource>();

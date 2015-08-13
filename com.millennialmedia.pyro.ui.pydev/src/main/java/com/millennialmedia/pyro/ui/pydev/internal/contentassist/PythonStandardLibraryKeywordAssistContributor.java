@@ -40,7 +40,7 @@ public class PythonStandardLibraryKeywordAssistContributor extends KeywordAssist
 		}
 
 		Map<String, List<String>> standardLibsMap = PyDevUtil.getStandardLibsMap();
-		List<String> referencedLibraries = new ArrayList<String>(ModelUtil.getLibraries(getEditor().getModel()));
+		List<String> referencedLibraries = PyDevUtil.getReferencedLibraries(PathUtil.getEditorFile(getEditor()));
 		referencedLibraries.add("BuiltIn");
 
 		for (String libraryName : referencedLibraries) {

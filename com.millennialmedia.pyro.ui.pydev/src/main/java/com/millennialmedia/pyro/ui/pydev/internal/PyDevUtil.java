@@ -92,6 +92,32 @@ public class PyDevUtil {
 		}
 	}
 	
+	public static List<String> getReferencedLibraries(IFile sourceFile) {
+		List<String> referencedLibraries = new ArrayList<String>();
+		List<IFile> filesVisited = new ArrayList<IFile>();
+		collectReferencedLibraryNames(referencedLibraries, filesVisited, sourceFile);
+		return referencedLibraries;
+	}
+	
+	private static void collectReferencedLibraryNames(List<String> libraryNames, List<IFile> filesVisited, IFile sourceFile) {
+		filesVisited.add(sourceFile);
+		RobotModel model = ModelManager.getManager().getModel(sourceFile);
+		libraryNames.addAll(ModelUtil.getLibraries(model));
+		
+		// now check any referenced resource files
+		List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(model);
+
+		for (String resourceFilePath : resourceFilePaths) {
+			IResource resource = PathUtil.getResourceForPath(sourceFile, resourceFilePath);
+			if (resource != null && resource instanceof IFile) {
+				IFile targetFile = (IFile) resource;
+				// avoid cycles, but otherwise recursively add additional library modules
+				if (!filesVisited.contains(targetFile)) {
+					collectReferencedLibraryNames(libraryNames, filesVisited, targetFile);
+				}
+			}
+		}
+	}
 	
 	public static Map<String, ModuleInfo> findModules(List<String> libraryNames, IFile sourceFile) {
 		IProject project = sourceFile.getProject();

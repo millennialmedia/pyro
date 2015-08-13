@@ -211,5 +211,16 @@ public class PathUtil {
 		}
 		return pathSegments;
 	}
+	
+	public static String joinPathSegments(List<String> segments) {
+		StringBuilder builder = new StringBuilder();
+		String separator = "";
+		for (String segment : segments) {
+			builder.append(separator);
+			builder.append(segment);
+			separator = ".";
+		}
+		return builder.toString();
+	}
 
 }

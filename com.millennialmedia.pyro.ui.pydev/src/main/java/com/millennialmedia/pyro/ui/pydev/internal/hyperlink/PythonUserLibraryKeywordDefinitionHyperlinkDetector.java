@@ -41,15 +41,14 @@ public class PythonUserLibraryKeywordDefinitionHyperlinkDetector extends Abstrac
 
 		final Map<String, Integer> candidateCallStrings = ModelUtil.getCandidateKeywordStrings(keywordCallContext
 				.getKeywordName());
-		List<String> libraries = ModelUtil.getLibraries(getEditor().getModel());
-		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, getEditor());
+		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findAllReferencedLibraryModules(PathUtil.getEditorFile(getEditor()));
 
 		for (final String candidateKeywordName : candidateCallStrings.keySet()) {
 			ModuleInfo moduleInfo = null;
 			String keywordName = null;
 			IToken matchingToken = null;
 
-			for (String libraryName : libraries) {
+			for (String libraryName : libraryModuleMap.keySet()) {
 				if (candidateKeywordName.contains(".")) {
 					// break into segments and look up against the module map
 					IToken[] tokens = null;
@@ -86,7 +85,7 @@ public class PythonUserLibraryKeywordDefinitionHyperlinkDetector extends Abstrac
 							continue;
 						}
 						for (IToken token : tokens) {
-							if (ModelUtil.normalizeKeywordName(candidateKeywordName, false).contains(
+							if (ModelUtil.normalizeKeywordName(candidateKeywordName, false).endsWith(
 									ModelUtil.normalizeKeywordName(token.getRepresentation(), false))) {
 								matchingToken = token;
 								break;
@@ -123,14 +122,39 @@ public class PythonUserLibraryKeywordDefinitionHyperlinkDetector extends Abstrac
 					if (tokens == null) {
 						continue;
 					}
+					
 					for (IToken token : tokens) {
-						if (ModelUtil.normalizeKeywordName(candidateKeywordName, false).contains(
+						if (ModelUtil.normalizeKeywordName(candidateKeywordName, false).equals(
 								ModelUtil.normalizeKeywordName(token.getRepresentation(), false))) {
 							matchingToken = token;
 							break;
 						}
 					}
 
+					if (matchingToken == null) {
+						// haven't found anything yet - check for a Class of the same name defined inside this module and repeat 
+						for (IToken token : tokens) {
+							if (moduleInfo.getModule().getName().equalsIgnoreCase(token.getRepresentation())) {
+								int line = token.getLineDefinition();
+								int col = token.getColDefinition();
+								ILocalScope localScope = moduleInfo.getModule().getLocalScope(line, col);
+								tokens = localScope.getAllLocalTokens();
+								break;
+							}
+						}
+
+						if (tokens == null) {
+							continue;
+						}
+						
+						for (IToken token : tokens) {
+							if (ModelUtil.normalizeKeywordName(candidateKeywordName, false).equals(
+									ModelUtil.normalizeKeywordName(token.getRepresentation(), false))) {
+								matchingToken = token;
+								break;
+							}
+						}
+					}
 				}
 
 				if (moduleInfo != null && keywordName != null && matchingToken != null) {

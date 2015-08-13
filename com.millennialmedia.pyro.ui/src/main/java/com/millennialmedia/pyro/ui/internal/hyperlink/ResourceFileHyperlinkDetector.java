@@ -50,7 +50,7 @@ public class ResourceFileHyperlinkDetector extends AbstractRobotHyperlinkDetecto
 	public IHyperlink[] detectHyperlinks(ITextViewer textViewer, IRegion region, boolean canShowMultipleHyperlinks) {
 		ResourceFileReferenceContext resourceRef = getTargetResourceReference(region);
 		if (resourceRef != null) {
-			IResource resource = PathUtil.getResourceForPath(getEditor(), resourceRef.getResourceName());
+			IResource resource = PathUtil.getResourceForPath(PathUtil.getEditorFile(getEditor()), resourceRef.getResourceName());
 			if (resource != null && resource.exists()) {
 				return new IHyperlink[] { createLink(resourceRef.getResourceStartOffset(), resourceRef
 						.getResourceName().length(), resource) };

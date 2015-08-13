@@ -17,6 +17,7 @@ import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.PyroUIPlugin;
 import com.millennialmedia.pyro.ui.contentassist.KeywordAssistContributorBase;
 import com.millennialmedia.pyro.ui.contentassist.RobotCompletionProposal;
+import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 import com.millennialmedia.pyro.ui.pydev.internal.ModuleInfo;
 import com.millennialmedia.pyro.ui.pydev.internal.PyDevUtil;
 
@@ -39,7 +40,7 @@ public class PythonStandardLibraryKeywordAssistContributor extends KeywordAssist
 		}
 
 		Map<String, List<String>> standardLibsMap = PyDevUtil.getStandardLibsMap();
-		List<String> referencedLibraries = new ArrayList<String>(ModelUtil.getLibraries(getEditor().getModel()));
+		List<String> referencedLibraries = PyDevUtil.getReferencedLibraries(PathUtil.getEditorFile(getEditor()));
 		referencedLibraries.add("BuiltIn");
 
 		for (String libraryName : referencedLibraries) {
@@ -47,7 +48,7 @@ public class PythonStandardLibraryKeywordAssistContributor extends KeywordAssist
 				continue;
 			}
 
-			ModuleInfo moduleInfo = PyDevUtil.findStandardLibModule(libraryName, getEditor());
+			ModuleInfo moduleInfo = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(getEditor()));
 			if (moduleInfo == null) {
 				return;
 			}

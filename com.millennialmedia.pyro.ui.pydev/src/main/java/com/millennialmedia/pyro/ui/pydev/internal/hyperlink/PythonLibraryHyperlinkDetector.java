@@ -26,7 +26,7 @@ import com.millennialmedia.pyro.ui.pydev.internal.ModuleInfo;
 import com.millennialmedia.pyro.ui.pydev.internal.PyDevUtil;
 
 /**
- * Hyperlink detector for external Python libraries references by the Library
+ * Hyperlink detector for external Python libraries referenced by the Library
  * setting in Robot source files.
  * 
  * @author spaxton
@@ -135,10 +135,10 @@ public class PythonLibraryHyperlinkDetector extends AbstractRobotHyperlinkDetect
 
 	protected ModuleInfo getModuleInfo(String libraryName) {
 		List<String> libraries = ModelUtil.getLibraries(getEditor().getModel());
-		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, getEditor());
+		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, PathUtil.getEditorFile(getEditor()));
 		ModuleInfo moduleInfo = libraryModuleMap.get(libraryName);
 		if (moduleInfo == null) {
-			moduleInfo = PyDevUtil.findStandardLibModule(libraryName, getEditor());
+			moduleInfo = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(getEditor()));
 		}
 		return moduleInfo;
 	}

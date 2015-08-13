@@ -43,7 +43,7 @@ public class PythonStandardLibraryKeywordDefinitionHyperlinkDetector extends Abs
 		final Map<String, Integer> candidateCallStrings = ModelUtil.getCandidateKeywordStrings(keywordCallContext
 				.getKeywordName());
 		Map<String, List<String>> standardLibsMap = PyDevUtil.getStandardLibsMap();
-		List<String> referencedLibraries = new ArrayList<String>(ModelUtil.getLibraries(getEditor().getModel()));
+		List<String> referencedLibraries = PyDevUtil.getReferencedLibraries(PathUtil.getEditorFile(getEditor()));
 		referencedLibraries.add("BuiltIn");
 
 		for (String libraryName : referencedLibraries) {
@@ -51,7 +51,7 @@ public class PythonStandardLibraryKeywordDefinitionHyperlinkDetector extends Abs
 				continue;
 			}
 
-			ModuleInfo moduleInfo = PyDevUtil.findStandardLibModule(libraryName, getEditor());
+			ModuleInfo moduleInfo = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(getEditor()));
 			if (moduleInfo == null) {
 				return null;
 			}
@@ -129,5 +129,5 @@ public class PythonStandardLibraryKeywordDefinitionHyperlinkDetector extends Abs
 
 		return null;
 	}
-
+	
 }

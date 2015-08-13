@@ -63,29 +63,44 @@ public class ResourceFileKeywordDefinitionHyperlinkDetector extends AbstractKeyw
 			if (rootPath != null) {
 				// for each resource file in the Settings table(s)
 				for (String resourceFilePath : resourceFilePaths) {
-					IResource resource = PathUtil.getResourceForPath(getEditor(), resourceFilePath);
-
-					if (resource != null && resource instanceof IFile) {
-						IFile targetFile = (IFile) resource;
-						RobotModel targetModel = ModelManager.getManager().getModel(targetFile);
-						// find any keyword definitions in this external file
-						Map<String, TableItemDefinition> keywordsMap = ModelUtil.getKeywords(targetModel);
-
-						// and copy them into our specific context subclass in
-						// order to remember the containing file
-						for (String keywordName : keywordsMap.keySet()) {
-							TableItemDefinition definition = keywordsMap.get(keywordName);
-							ResourceFileKeywordDefinitionContext context = new ResourceFileKeywordDefinitionContext();
-							context.setKeywordDefinition(definition);
-							context.setFile(targetFile);
-							targetKeywords.put(keywordName, context);
-						}
-					}
+					addTargetAndTransitiveLinks(targetKeywords, file, resourceFilePath);
 				}
 			}
 		}
 
 		return targetKeywords;
+	}
+	
+	private void addTargetAndTransitiveLinks(Map<String, KeywordDefinitionContext> targetKeywords, IFile localFile, String resourceFilePath) {
+		IResource resource = PathUtil.getResourceForPath(localFile, resourceFilePath);
+
+		if (resource != null && resource instanceof IFile) {
+			IFile targetFile = (IFile) resource;
+			RobotModel targetModel = ModelManager.getManager().getModel(targetFile);
+			// find any keyword definitions in this external file
+			Map<String, TableItemDefinition> keywordsMap = ModelUtil.getKeywords(targetModel);
+
+			// and copy them into our specific context subclass in
+			// order to remember the containing file
+			for (String keywordName : keywordsMap.keySet()) {
+				// check map first to short-circuit cycles of imports
+				if(!targetKeywords.containsKey(keywordName)) {
+					TableItemDefinition definition = keywordsMap.get(keywordName);
+					ResourceFileKeywordDefinitionContext context = new ResourceFileKeywordDefinitionContext();
+					context.setKeywordDefinition(definition);
+					context.setFile(targetFile);
+					targetKeywords.put(keywordName, context);
+				}
+			}
+
+			// repeat for any resource files contained within this model (transitive resource file imports)
+			List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(targetModel);
+			if (!resourceFilePaths.isEmpty()) {
+				for (String transitiveResourceFilePath : resourceFilePaths) {
+					addTargetAndTransitiveLinks(targetKeywords, targetFile, transitiveResourceFilePath);
+				}
+			}
+		}
 	}
 
 	@Override

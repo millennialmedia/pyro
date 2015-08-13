@@ -42,11 +42,10 @@ public class PythonUserLibraryKeywordAssistContributor extends KeywordAssistCont
 
 		if (keywordFragments != null) {
 			// get any Library imports
-			List<String> libraries = ModelUtil.getLibraries(getEditor().getModel());
-			Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, getEditor());
+			Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findAllReferencedLibraryModules(PathUtil.getEditorFile(getEditor()));
 
-			if (!libraries.isEmpty()) {
-				for (String libraryName : libraries) {
+			if (!libraryModuleMap.isEmpty()) {
+				for (String libraryName : libraryModuleMap.keySet()) {
 					ModuleInfo moduleInfo = null;
 
 					String referencedLibraryName = ModelUtil.getLibraryAlias(getEditor().getModel(), libraryName);
@@ -130,7 +129,9 @@ public class PythonUserLibraryKeywordAssistContributor extends KeywordAssistCont
 
 									StyledString styledDisplayString = new StyledString();
 									styledDisplayString.append(keyword, RobotCompletionProposal.FOREGROUND_STYLER);
-									styledDisplayString.append(" - " + libraryName,
+									
+									String libraryPath = PathUtil.joinPathSegments(PathUtil.getNormalizedPathSegments(libraryName));
+									styledDisplayString.append(" - " + libraryPath,
 											RobotCompletionProposal.QUALIFIER_STYLER);
 									addCompletionProposal(proposals, keyword, offset - keywordFragments[0].length()
 											+ candidateFragmentStrings.get(fragment), keywordFragments[0].length()

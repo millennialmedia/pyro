@@ -21,3 +21,4 @@ Export-Package: com.millennialmedia.pyro.ui,
 Bundle-Activator: com.millennialmedia.pyro.ui.PyroUIPlugin
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-Localization: plugin

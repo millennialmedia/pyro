@@ -5,6 +5,7 @@
    <extension-point id="contentAssistProcessor" name="contentAssistProcessor" schema="schema/contentAssistProcessor.exsd"/>
    <extension-point id="searchPathContributor" name="searchPathContributor" schema="schema/searchPathContributor.exsd"/>
 
+   <!-- the editor contribution -->
    <extension
          point="org.eclipse.ui.editors">
       <editor
@@ -13,10 +14,11 @@
             extensions="tsv,txt,robot"
             icon="icons/pyro.png"
             id="com.millennialmedia.pyro.ui.editor.RobotFrameworkEditor"
-            name="Robot Framework Editor">
+            name="%plugin.editor.name">
       </editor>
    </extension>
    
+   <!-- default hyperlinking -->
    <extension
          point="com.millennialmedia.pyro.ui.hyperlinkDetector">
       <detector class="com.millennialmedia.pyro.ui.internal.hyperlink.LocalKeywordDefinitionHyperlinkDetector" priority="1" />
@@ -24,6 +26,8 @@
       <detector class="com.millennialmedia.pyro.ui.internal.hyperlink.ResourceFileHyperlinkDetector" priority="8" />
    </extension>
    
+   
+   <!-- default content assist contributors -->
    <extension
          point="com.millennialmedia.pyro.ui.contentAssistProcessor">
          <processor class="com.millennialmedia.pyro.ui.internal.contentassist.LocalKeywordAssistContributor" priority="5" />
@@ -44,5 +48,22 @@
       </actionSetPartAssociation>
    </extension>
       
+   <!-- initialize preference store defaults -->
+   <extension point="org.eclipse.core.runtime.preferences">
+      	<initializer class="com.millennialmedia.pyro.ui.internal.preferences.PyroPreferenceInitializer" />
+   </extension>
+      
+   <!-- preference pages -->
+   <extension point="org.eclipse.ui.preferencePages">
+      <page id="com.millenialmedia.pyro.ui.preferences.root"
+	        class="com.millennialmedia.pyro.ui.internal.preferences.RootPreferencePage"
+            name="%RootPreferencePage.name">
+      </page>
+      <page id="com.millennialmedia.pyro.ui.preferences.capitalization"
+	        class="com.millennialmedia.pyro.ui.internal.preferences.CapitalizationPreferencePage"
+	        category="com.millenialmedia.pyro.ui.preferences.root"
+            name="%CapitalizationPreferencePage.name">
+      </page>
+   </extension>      
 
 </plugin>

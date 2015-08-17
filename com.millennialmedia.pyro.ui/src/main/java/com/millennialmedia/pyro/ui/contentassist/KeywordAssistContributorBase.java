@@ -1,6 +1,11 @@
 package com.millennialmedia.pyro.ui.contentassist;
 
+import org.eclipse.jface.preference.IPreferenceStore;
+
 import com.millennialmedia.pyro.model.StepSegment.SegmentType;
+import com.millennialmedia.pyro.ui.PyroUIPlugin;
+import com.millennialmedia.pyro.ui.internal.preferences.IPreferenceConstants;
+import com.millennialmedia.pyro.ui.internal.preferences.IPreferenceConstants.CapsMode;
 
 /**
  * Contributor base class that adds extra functionality specifically for Robot
@@ -42,32 +47,48 @@ public class KeywordAssistContributorBase extends ContentAssistContributorBase {
 	}
 
 	protected String performSmartCapitalization(String keywordName, String partialKeywordPrefix) {
-		// first determine our capitalization scheme based on the current text
-		// up to the caret location
 		boolean capitalizeFirstWord = false;
 		boolean capitalizeAllWords = false;
-		int lastDotIndex = partialKeywordPrefix.lastIndexOf(".") + 1;
-		if (lastDotIndex < 0) {
-			lastDotIndex = 0;
-		}
 
-		if (partialKeywordPrefix.length() > lastDotIndex) {
-			String[] words = partialKeywordPrefix.substring(lastDotIndex).split(" ");
-			if (words.length == 0) {
-				capitalizeFirstWord = true;
+		// capitalization is affected by a preference setting which stores the selected mode
+		// if the "smart caps" mode is used, further logic is run to determine what case to use
+		// for a keyword string
+		IPreferenceStore store = PyroUIPlugin.getDefault().getPreferenceStore();
+		IPreferenceConstants.CapsMode capsMode = CapsMode.valueOf(store.getString(IPreferenceConstants.CAPITALIZATION_KEYWORD_MODE));
+		
+		switch (capsMode) {
+		case PRESERVE_CASE:
+			// nothing to do
+			return keywordName;
+		case UPPERCASE:
+			capitalizeAllWords = true;
+			break;
+		case SMART_CAPS:
+			// first determine our capitalization scheme based on the current text
+			// up to the caret location
+			int lastDotIndex = partialKeywordPrefix.lastIndexOf(".") + 1;
+			if (lastDotIndex < 0) {
+				lastDotIndex = 0;
 			}
-			if (words.length > 0 && (Character.isUpperCase(words[0].charAt(0)) || lastDotIndex > 0)) {
-				capitalizeFirstWord = true;
-			}
-			if (words.length > 1 && Character.isUpperCase(words[1].charAt(0))) {
-				capitalizeAllWords = true;
-			}
-		}
 
-		// now construct the newly-capitalized string using the full keyword
-		// name
+			if (partialKeywordPrefix.length() > lastDotIndex) {
+				String[] words = partialKeywordPrefix.substring(lastDotIndex).split(" ");
+				if (words.length == 0) {
+					capitalizeFirstWord = true;
+				}
+				if (words.length > 0 && (Character.isUpperCase(words[0].charAt(0)) || lastDotIndex > 0)) {
+					capitalizeFirstWord = true;
+				}
+				if (words.length > 1 && Character.isUpperCase(words[1].charAt(0))) {
+					capitalizeAllWords = true;
+				}
+			}
+			break;
+		}
+		
+		// now construct the newly-capitalized string using the full keyword name
 		StringBuilder builder = new StringBuilder();
-		lastDotIndex = keywordName.lastIndexOf(".") + 1;
+		int lastDotIndex = keywordName.lastIndexOf(".") + 1;
 		if (lastDotIndex < 0) {
 			lastDotIndex = 0;
 		}

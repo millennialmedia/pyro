@@ -89,20 +89,41 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 		RobotModel model = getEditor().getModel();
 		Line line = model.getFirstLine();
 		Line previousLine = line;
+		// advance to a line that we know contains the caret location
 		while (line != null && line.getLineOffset() <= offset) {
 			previousLine = line;
 			line = line.getNextLine();
 		}
 
+		// previousLine now points to our current line
 		if (previousLine != null && previousLine instanceof Step) {
+			Step step = (Step) previousLine;
 			int lineOffset = previousLine.getLineOffset();
-			for (StepSegment segment : ((Step) previousLine).getSegments()) {
-				if (segment.getSegmentType() == targetType && lineOffset + segment.getOffsetInLine() <= offset
-						&& lineOffset + segment.getOffsetInLine() + segment.getValue().length() >= offset) {
+			
+			// walk through the segment in this step to find the one containing the caret
+			for (int i=0;i<step.getSegments().size(); i++) {
+				StepSegment segment = step.getSegments().get(i);
+				if (segment.getSegmentType() == targetType &&                 // is of the right type 
+						lineOffset + segment.getOffsetInLine() <= offset &&   // beginning of cell is before the caret offset
+						((lineOffset + 
+							segment.getOffsetInLine() + 
+							segment.getValue().length() >= offset) ||         // caret is before end of cell
+						(i == step.getSegments().size()-1))                    // or if not, is just after the last cell (whitespace is trimmed)
+						) {
+
+					String value = segment.getValue();
+					int offsetInSegment = offset - previousLine.getLineOffset() - segment.getOffsetInLine();
+					if (value.length() < offsetInSegment ) {
+						// if necessary, pad spaces to the right of the trimmed cell contents
+						for (int paddingCount=0; paddingCount < offsetInSegment-value.length(); paddingCount++) {
+							value = value + " ";
+						}
+					}
+
 					return new String[] {
-							segment.getValue().substring(0,
+							value.substring(0,
 									offset - previousLine.getLineOffset() - segment.getOffsetInLine()),
-							segment.getValue().substring(
+							value.substring(
 									offset - previousLine.getLineOffset() - segment.getOffsetInLine()) };
 				}
 			}

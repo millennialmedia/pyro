@@ -27,12 +27,12 @@ public class SettingsAssistContributor extends ContentAssistContributorBase {
 	@Override
 	public void computeCompletionProposals(ITextViewer viewer, int offset, List<RobotCompletionProposal> proposals) {
 		TableType tableType = getContainingTableType(offset);
-		String[] settingFragments = getStringFragments(offset, SegmentType.SETTING_NAME);
+		String[] settingFragments = getStringFragments(offset, SegmentType.SETTING_NAME, viewer);
 
 		// for in-progress words under a setting table, they will parse as unknown 
 		// but may be the beginning of a valid setting name
 		if(settingFragments == null && tableType == TableType.SETTING) {
-			settingFragments = getStringFragments(offset, SegmentType.UNKNOWN);
+			settingFragments = getStringFragments(offset, SegmentType.UNKNOWN, viewer);
 		}
 		
 		// if we still don't have a partial string, see if we're starting a line or a valid cell 

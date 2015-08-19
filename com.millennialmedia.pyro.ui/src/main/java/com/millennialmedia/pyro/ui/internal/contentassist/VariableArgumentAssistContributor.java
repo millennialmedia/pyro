@@ -29,9 +29,10 @@ import com.millennialmedia.pyro.ui.contentassist.RobotCompletionProposal;
 
 /**
  * A single contributor to handle assist for variables inserted into argument
- * cells of the Robot model. Note that unlike other contributions, variable
- * assist is implemented in a single larger class because all of the sources for
- * candidate variables are found within the same local file.
+ * cells or added as the left-hand side of a variable assignment. Note that 
+ * unlike other contributions, variable assist is implemented in a single larger 
+ * class because all of the sources for candidate variables are found within the 
+ * same local file.
  * 
  * If Pyro was ever to support external variable files, that might mean
  * splitting this class up to do local variables first, then another contributor
@@ -48,7 +49,7 @@ public class VariableArgumentAssistContributor extends ContentAssistContributorB
 
 	@Override
 	public void computeCompletionProposals(ITextViewer viewer, int offset, List<RobotCompletionProposal> proposals) {
-		String variableBeginning = extractVariableBeginning(offset);
+		String variableBeginning = extractVariableBeginning(offset, viewer);
 		if (variableBeginning == null) {
 			return;
 		}
@@ -319,14 +320,23 @@ public class VariableArgumentAssistContributor extends ContentAssistContributorB
 		}
 	}
 
-	private String extractVariableBeginning(int offset) {
-		String[] argumentFragments = getStringFragments(offset, SegmentType.ARGUMENT);
-		if (argumentFragments == null && isPotentialEmptyStepSegment(offset, SegmentType.ARGUMENT)) {
-			argumentFragments = new String[] { "", "" };
+	private String extractVariableBeginning(int offset, ITextViewer viewer) {
+		// first see if we're in an argument cell
+		String[] variableFragments = getStringFragments(offset, SegmentType.ARGUMENT, viewer);
+		if (variableFragments == null && isPotentialEmptyStepSegment(offset, SegmentType.ARGUMENT)) {
+			variableFragments = new String[] { "", "" };
+		}
+		
+		// now check if this may be a variable assignment instead
+		if (variableFragments == null) {
+			variableFragments = getStringFragments(offset, SegmentType.VARIABLE, viewer);
+			if (variableFragments == null && isPotentialEmptyStepSegment(offset, SegmentType.VARIABLE)) {
+				variableFragments = new String[] { "", "" };
+			}
 		}
 
-		if (argumentFragments != null) {
-			String extractedVariableBeginning = argumentFragments[0];
+		if (variableFragments != null) {
+			String extractedVariableBeginning = variableFragments[0];
 			int lastScalar = extractedVariableBeginning.lastIndexOf("$");
 			int lastList = extractedVariableBeginning.lastIndexOf("@");
 			int startIndex = Math.max(lastScalar, lastList);

@@ -26,7 +26,7 @@ public class KeywordAssistContributorBase extends ContentAssistContributorBase {
 	 *         the target offset is not a keyword
 	 */
 	protected String[] getCurrentKeywordFragments(int offset) {
-		String[] fragments = getStringFragments(offset, SegmentType.KEYWORD_CALL);
+		String[] fragments = getStringFragments(offset, SegmentType.KEYWORD_CALL, null);
 		if (fragments == null) {
 			// we're not in a segment that was parsed as a keyword, but see if
 			// it's a suitable

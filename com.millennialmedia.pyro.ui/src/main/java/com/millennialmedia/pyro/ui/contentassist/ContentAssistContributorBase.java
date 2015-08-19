@@ -85,7 +85,7 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 	 * @return a 2-element string array with the string sections, or null if the
 	 *         target offset is not of the given type
 	 */
-	protected String[] getStringFragments(int offset, SegmentType targetType) {
+	protected String[] getStringFragments(int offset, SegmentType targetType, ITextViewer viewer) {
 		RobotModel model = getEditor().getModel();
 		Line line = model.getFirstLine();
 		Line previousLine = line;
@@ -108,15 +108,25 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 						((lineOffset + 
 							segment.getOffsetInLine() + 
 							segment.getValue().length() >= offset) ||         // caret is before end of cell
-						(i == step.getSegments().size()-1))                    // or if not, is just after the last cell (whitespace is trimmed)
+						(i == step.getSegments().size()-1))                    // or if not, is after the last cell (whitespace is trimmed)
 						) {
 
 					String value = segment.getValue();
 					int offsetInSegment = offset - previousLine.getLineOffset() - segment.getOffsetInLine();
 					if (value.length() < offsetInSegment ) {
-						// if necessary, pad spaces to the right of the trimmed cell contents
-						for (int paddingCount=0; paddingCount < offsetInSegment-value.length(); paddingCount++) {
-							value = value + " ";
+						// first see if we're even on the same line (blank empty lines will be omitted in the model
+						// so we may be positioned after the entire Step we're checking)
+						int lineNum = viewer.getTextWidget().getLineAtOffset(offset);
+						String lineContents = viewer.getTextWidget().getLine(lineNum);
+						if (lineContents != null && !lineContents.contains(value)) {
+							// we're on a different line altogether
+							return new String[] { "","" };
+						} else {
+							// we're on the same line, just after all the existing text contents
+							// if necessary, pad spaces to the right of the trimmed cell contents
+							for (int paddingCount=0; paddingCount < offsetInSegment-value.length(); paddingCount++) {
+								value = value + " ";
+							}
 						}
 					}
 

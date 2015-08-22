@@ -9,13 +9,15 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.text.ITextViewer;
 
 import com.millennialmedia.pyro.model.Line;
+import com.millennialmedia.pyro.model.ModelManager;
 import com.millennialmedia.pyro.model.RobotModel;
 import com.millennialmedia.pyro.model.Step;
-import com.millennialmedia.pyro.model.StepSegment;
 import com.millennialmedia.pyro.model.Step.StepType;
+import com.millennialmedia.pyro.model.StepSegment;
 import com.millennialmedia.pyro.model.StepSegment.SegmentType;
 import com.millennialmedia.pyro.model.Table;
 import com.millennialmedia.pyro.model.Table.TableType;
@@ -26,6 +28,7 @@ import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.PyroUIPlugin;
 import com.millennialmedia.pyro.ui.contentassist.ContentAssistContributorBase;
 import com.millennialmedia.pyro.ui.contentassist.RobotCompletionProposal;
+import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 
 /**
  * A single contributor to handle assist for variables inserted into argument
@@ -42,7 +45,7 @@ import com.millennialmedia.pyro.ui.contentassist.RobotCompletionProposal;
  * 
  * @author spaxton
  */
-public class VariableArgumentAssistContributor extends ContentAssistContributorBase {
+public class VariableNameAssistContributor extends ContentAssistContributorBase {
 	private Pattern SCALAR_PATTERN = Pattern.compile("\\$\\{[^\\{]*\\}");
 	private Pattern LIST_PATTERN = Pattern.compile("\\@\\{[^\\{]*\\}");
 	private Pattern ENV_PATTERN = Pattern.compile("\\%\\{[^\\{]*\\}");
@@ -77,6 +80,9 @@ public class VariableArgumentAssistContributor extends ContentAssistContributorB
 
 		// global test variables from variables table
 		handleVariableTableVars(offset, variableBeginning, proposals);
+
+		// global test variables from external resource files
+		handleVariableTableVarsFromResourceFiles(offset, variableBeginning, proposals);
 
 		// Robot built-in variables
 		setProposalImage(PyroUIPlugin.getDefault().getImageRegistry().get(PyroUIPlugin.IMAGE_ROBOT));
@@ -258,6 +264,20 @@ public class VariableArgumentAssistContributor extends ContentAssistContributorB
 		List<String> varNames = collectVarsFromVariableTables(getEditor().getModel());
 		Collections.sort(varNames);
 		createProposals(varNames, offset, variableBeginning, proposals);
+	}
+
+	private void handleVariableTableVarsFromResourceFiles(int offset, String variableBeginning, List<RobotCompletionProposal> proposals) {
+		// recursively walk through resource file imports to collect variables
+		List<IFile> resourceFiles = PathUtil.collectReferencedResourceFiles(getEditor());
+		
+		for (IFile file : resourceFiles) {
+			RobotModel model = ModelManager.getManager().getModel(file);
+			if (model != null) {
+				List<String> varNames = collectVarsFromVariableTables(model);
+				Collections.sort(varNames);
+				createProposals(varNames, offset, variableBeginning, proposals);
+			}
+		}
 	}
 
 	@SuppressWarnings("unchecked")

@@ -5,7 +5,7 @@
    
    <extension point="com.millennialmedia.pyro.modelPostProcessor">
      <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.TestCaseTemplatePostProcessor" priority="5" />
-     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.SetupTeardownPostProcessor" priority="10" />
+     <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.SettingsTableKeywordPostProcessor" priority="10" />
      <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.BuiltInKeywordArgumentsPostProcessor" priority="15" />
      <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.ForLoopPostProcessor" priority="20" />
      <processor class="com.millennialmedia.pyro.internal.parser.postprocessor.LibraryPostProcessor" priority="25" />

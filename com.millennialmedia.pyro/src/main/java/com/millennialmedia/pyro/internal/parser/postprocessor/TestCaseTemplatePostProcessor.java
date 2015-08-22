@@ -21,12 +21,13 @@ public class TestCaseTemplatePostProcessor extends AbstractModelPostProcessor {
 
 	@Override
 	public void postProcess(RobotModel model) {
+		boolean fileHasTestTemplateSetting = isFileWithTestTemplateSetting(model);
 		// handle testcases that are based on templates
 		for (Table table : model.getTables()) {
 			if (table.getTableType() == TableType.TESTCASE) {
 				for (Line testcaseLine : table.getTableLines()) {
 					TableItemDefinition testcase = (TableItemDefinition) testcaseLine;
-					if (testcaseHasTemplate(testcase)) {
+					if (fileHasTestTemplateSetting || testcaseHasTemplate(testcase)) {
 						// this testcase is based on a template, so the member
 						// steps need to be adjusted to be purely arguments
 						// (i.e. not starting with a keyword call)
@@ -67,4 +68,23 @@ public class TestCaseTemplatePostProcessor extends AbstractModelPostProcessor {
 		return false;
 	}
 
+	private boolean isFileWithTestTemplateSetting(RobotModel model) {
+		for (Table table : model.getTables()) {
+			if (table.getTableType() == TableType.SETTING) {
+				for (Line line : table.getTableLines()) {
+					Step step = (Step) line;
+					if (step.getStepType() == StepType.SETTING) {
+						for (StepSegment seg : step.getSegments()) {
+							if (seg.getSegmentType() == SegmentType.SETTING_NAME && 
+								"Test Template".equalsIgnoreCase(seg.getValue())) {
+								return true;
+							}
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
+	
 }

@@ -19,6 +19,9 @@ import org.eclipse.core.runtime.Platform;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 
+import com.millennialmedia.pyro.model.ModelManager;
+import com.millennialmedia.pyro.model.RobotModel;
+import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.editor.RobotFrameworkEditor;
 import com.millennialmedia.pyro.ui.internal.registry.SearchPathContributorRegistryReader;
 
@@ -223,4 +226,43 @@ public class PathUtil {
 		return builder.toString();
 	}
 
+	public static List<IFile> collectReferencedResourceFiles(RobotFrameworkEditor editor) {
+		List<IFile> files = new ArrayList<IFile>();
+		List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(editor.getModel());
+		if (!resourceFilePaths.isEmpty()) {
+			IFile file = PathUtil.getEditorFile(editor);
+			if (file == null) {
+				return files;
+			}
+
+			IPath rootPath = PathUtil.getRootPath(editor);
+			if (rootPath != null) {
+				// for each resource file in the Settings table(s)
+				for (String resourceFilePath : resourceFilePaths) {
+					addIndirectlyReferencedFiles(files, file, resourceFilePath);
+				}
+			}
+		}
+		return files;
+	}
+	
+	private static void addIndirectlyReferencedFiles(List<IFile> files, IFile localFile, String resourceFilePath) {
+		IResource resource = PathUtil.getResourceForPath(localFile, resourceFilePath);
+		if (resource != null && resource instanceof IFile) {
+			IFile targetFile = (IFile) resource;
+			if (!files.contains(targetFile)) {
+				files.add(targetFile);
+				RobotModel targetModel = ModelManager.getManager().getModel(targetFile);
+
+				// repeat for any resource files contained within this model (transitive resource file imports)
+				List<String> resourceFilePaths = ModelUtil.getResourceFilePaths(targetModel);
+				if (!resourceFilePaths.isEmpty()) {
+					for (String transitiveResourceFilePath : resourceFilePaths) {
+						addIndirectlyReferencedFiles(files, targetFile, transitiveResourceFilePath);
+					}
+				}
+				
+			}
+		}
+	}
 }

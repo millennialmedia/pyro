@@ -34,7 +34,7 @@
          <processor class="com.millennialmedia.pyro.ui.internal.contentassist.ResourceFileKeywordAssistContributor" priority="6" />
          <processor class="com.millennialmedia.pyro.ui.internal.contentassist.SettingsAssistContributor" priority="1" />
          <processor class="com.millennialmedia.pyro.ui.internal.contentassist.TableNameAssistContributor" priority="15" />
-         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.VariableArgumentAssistContributor" priority="20" />
+         <processor class="com.millennialmedia.pyro.ui.internal.contentassist.VariableNameAssistContributor" priority="20" />
    </extension>
 
    <!-- force the visibility of the Show Whitespace Characters action in the main toolbar when Pyro is the active editor  -->

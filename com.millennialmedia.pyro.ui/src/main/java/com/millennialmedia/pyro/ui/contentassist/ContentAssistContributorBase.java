@@ -172,10 +172,10 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 				// segment
 				int lineNum = getEditor().getViewer().getTextWidget().getLineAtOffset(offset);
 				String lineContents = getEditor().getViewer().getTextWidget().getLine(lineNum);
-				if (("tsv".equals(PathUtil.getEditorFile(getEditor()).getFileExtension()) && lineContents
-						.contains("\t")) || // tsv case
-						lineContents.length() > 1 && (lineContents.startsWith("  ") || lineContents.startsWith("| "))) { // txt,robot
-																															// case
+				if (("tsv".equals(PathUtil.getEditorFile(getEditor()).getFileExtension()) && 
+						lineContents.contains("\t")) || // tsv case
+						lineContents.length() > 1 && 
+						(lineContents.startsWith("  ") || lineContents.startsWith("| "))) { // txt,robot case
 					return true;
 				}
 			} else {
@@ -207,6 +207,38 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 					StepSegment lastSegment = segments.get(segments.size() - 1);
 					if (line.getLineOffset() + lastSegment.getOffsetInLine() + lastSegment.getValue().length() < offset
 							&& isValidPosition(null, segmentType, seenKeyword, hasNonEmptySegment)) {
+						return true;
+					}
+				}
+			}
+		} else if (tableType == TableType.SETTING) {
+			Line line = getRobotLineForOffset(offset);
+			if (offset >= line.getLineOffset()) {
+				// we're on a valid parsed line - now look for an offset that's
+				// beginning a new segment and validate it's allowable here
+				if (line instanceof Step) {
+					boolean seenSettingNameThatAllowsKeyword = false;
+					List<StepSegment> segments = ((Step) line).getSegments();
+					for (StepSegment segment : segments) {
+						if (segment.getSegmentType() == SegmentType.SETTING_NAME &&
+							("Suite Setup".equalsIgnoreCase(segment.getValue()) ||
+							"Suite Teardown".equalsIgnoreCase(segment.getValue()) ||
+							"Test Setup".equalsIgnoreCase(segment.getValue()) ||
+							"Test Teardown".equalsIgnoreCase(segment.getValue()) ||
+							"Test Template".equalsIgnoreCase(segment.getValue()))) {
+							seenSettingNameThatAllowsKeyword = true;
+							continue;
+						}
+						if (seenSettingNameThatAllowsKeyword && 
+							segment.getValue().trim().equals("") &&
+							segmentType == SegmentType.KEYWORD_CALL) {
+							return true;
+						}
+					}
+					StepSegment lastSegment = segments.get(segments.size() - 1);
+					if ((line.getLineOffset() + lastSegment.getOffsetInLine() + lastSegment.getValue().length() < offset) &&
+							seenSettingNameThatAllowsKeyword && 
+							segmentType == SegmentType.KEYWORD_CALL) {
 						return true;
 					}
 				}

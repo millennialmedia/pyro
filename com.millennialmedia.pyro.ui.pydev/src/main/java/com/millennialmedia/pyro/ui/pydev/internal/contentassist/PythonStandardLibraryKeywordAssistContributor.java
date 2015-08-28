@@ -34,7 +34,7 @@ public class PythonStandardLibraryKeywordAssistContributor extends KeywordAssist
 
 	@Override
 	public void computeCompletionProposals(ITextViewer viewer, int offset, List<RobotCompletionProposal> proposals) {
-		String[] keywordFragments = getCurrentKeywordFragments(offset);
+		String[] keywordFragments = getCurrentKeywordFragments(offset, viewer);
 		if (keywordFragments == null) {
 			return;
 		}

@@ -25,9 +25,12 @@ public class TableNameAssistContributor extends ContentAssistContributorBase {
 	@Override
 	public void computeCompletionProposals(ITextViewer viewer, int offset, List<RobotCompletionProposal> proposals) {
 		int lineNum = viewer.getTextWidget().getLineAtOffset(offset);
+		int offsetAtLine = viewer.getTextWidget().getOffsetAtLine(lineNum);
 		String lineContents = viewer.getTextWidget().getLine(lineNum);
-		if (lineContents != null
-				&& (lineContents.startsWith("*") || ("".equals(lineContents.trim()) && !lineContents.contains("\t")))) {
+		String textBeforeCaret = lineContents.substring(0, offset - offsetAtLine);
+
+		if (textBeforeCaret != null
+				&& (textBeforeCaret.startsWith("*") || ("".equals(textBeforeCaret.trim()) && !textBeforeCaret.contains("\t")))) {
 			String tableNameBeginning = lineContents.substring(0,
 					offset - viewer.getTextWidget().getOffsetAtLine(lineNum));
 			tableNameBeginning = tableNameBeginning.replace("*", "").trim();

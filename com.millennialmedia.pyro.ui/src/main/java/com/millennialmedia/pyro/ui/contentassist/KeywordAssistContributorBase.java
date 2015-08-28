@@ -1,6 +1,7 @@
 package com.millennialmedia.pyro.ui.contentassist;
 
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.text.ITextViewer;
 
 import com.millennialmedia.pyro.model.StepSegment.SegmentType;
 import com.millennialmedia.pyro.ui.PyroUIPlugin;
@@ -25,8 +26,8 @@ public class KeywordAssistContributorBase extends ContentAssistContributorBase {
 	 * @return a 2-element string array with the keyword sections, or null if
 	 *         the target offset is not a keyword
 	 */
-	protected String[] getCurrentKeywordFragments(int offset) {
-		String[] fragments = getStringFragments(offset, SegmentType.KEYWORD_CALL, null);
+	protected String[] getCurrentKeywordFragments(int offset, ITextViewer viewer) {
+		String[] fragments = getStringFragments(offset, SegmentType.KEYWORD_CALL, viewer);
 		if (fragments == null) {
 			// we're not in a segment that was parsed as a keyword, but see if
 			// it's a suitable
@@ -98,9 +99,11 @@ public class KeywordAssistContributorBase extends ContentAssistContributorBase {
 			if (capitalizeAllWords || (i == 0 && capitalizeFirstWord)) {
 				builder.append(Character.toUpperCase(words[i].charAt(0)));
 			} else {
-				builder.append(words[i].charAt(0));
+				builder.append(words[i].length() > 0 ? words[i].charAt(0) : "");
 			}
-			builder.append(words[i].substring(1));
+			if (words[i].length() > 1) {
+				builder.append(words[i].substring(1));
+			}
 			builder.append(" ");
 		}
 		return builder.toString();

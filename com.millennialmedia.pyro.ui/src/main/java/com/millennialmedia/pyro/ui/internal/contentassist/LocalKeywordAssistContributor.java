@@ -25,7 +25,7 @@ public class LocalKeywordAssistContributor extends KeywordAssistContributorBase 
 
 	@Override
 	public void computeCompletionProposals(ITextViewer viewer, int offset, List<RobotCompletionProposal> proposals) {
-		String[] keywordFragments = getCurrentKeywordFragments(offset);
+		String[] keywordFragments = getCurrentKeywordFragments(offset, viewer);
 
 		if (keywordFragments != null) {
 			List<String> keywords = new ArrayList<String>(ModelUtil.getKeywords(getEditor().getModel()).keySet());

@@ -120,7 +120,11 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 						String lineContents = viewer.getTextWidget().getLine(lineNum);
 						if (lineContents != null && !lineContents.contains(value)) {
 							// we're on a different line altogether
-							return new String[] { "","" };
+							if (isPotentialEmptyStepSegment(offset, targetType)) {
+								return new String[] { "","" };
+							} else {
+								return null;
+							}
 						} else {
 							// we're on the same line, just after all the existing text contents
 							// if necessary, pad spaces to the right of the trimmed cell contents
@@ -171,11 +175,18 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 				// look for the possible conditions where we'd begin a new
 				// segment
 				int lineNum = getEditor().getViewer().getTextWidget().getLineAtOffset(offset);
+				int offsetAtLine = getEditor().getViewer().getTextWidget().getOffsetAtLine(lineNum);
 				String lineContents = getEditor().getViewer().getTextWidget().getLine(lineNum);
-				if (("tsv".equals(PathUtil.getEditorFile(getEditor()).getFileExtension()) && 
-						lineContents.contains("\t")) || // tsv case
-						lineContents.length() > 1 && 
-						(lineContents.startsWith("  ") || lineContents.startsWith("| "))) { // txt,robot case
+				String textBeforeCaret = lineContents.substring(0, offset - offsetAtLine);
+
+				if ("tsv".equals(PathUtil.getEditorFile(getEditor()).getFileExtension()) 
+						&& textBeforeCaret.contains("\t")) {
+					// tsv case
+					// if we're skipping over the first (empty) cell, then it's allowed
+					return true;
+				} else if (lineContents.length() > 1 
+						&&	(textBeforeCaret.startsWith("  ") || textBeforeCaret.startsWith("| "))) { 
+					// txt,robot case
 					return true;
 				}
 			} else {
@@ -184,6 +195,8 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 				if (line instanceof Step) {
 					boolean seenKeyword = false;
 					boolean hasNonEmptySegment = false;
+					boolean isNotFirstSegment = false;
+					
 					List<StepSegment> segments = ((Step) line).getSegments();
 					for (StepSegment segment : segments) {
 						if (!"".equals(segment.getValue().trim())) {
@@ -199,14 +212,16 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 
 						if (line.getLineOffset() + segment.getOffsetInLine() <= offset
 								&& line.getLineOffset() + segment.getOffsetInLine() + segment.getValue().length() >= offset) {
-							if (isValidPosition(segment, segmentType, seenKeyword, hasNonEmptySegment)) {
+							if (isValidPosition(segment, segmentType, seenKeyword, hasNonEmptySegment, isNotFirstSegment)) {
 								return true;
 							}
 						}
+						
+						isNotFirstSegment = true;
 					}
 					StepSegment lastSegment = segments.get(segments.size() - 1);
 					if (line.getLineOffset() + lastSegment.getOffsetInLine() + lastSegment.getValue().length() < offset
-							&& isValidPosition(null, segmentType, seenKeyword, hasNonEmptySegment)) {
+							&& isValidPosition(null, segmentType, seenKeyword, hasNonEmptySegment, isNotFirstSegment)) {
 						return true;
 					}
 				}
@@ -248,9 +263,9 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 	}
 
 	private boolean isValidPosition(StepSegment segment, SegmentType desiredSegmentType, boolean seenKeyword,
-			boolean hasNonEmptySegment) {
+			boolean hasNonEmptySegment, boolean isNotFirstSegment) {
 		if (segment == null || segment.getValue().trim().equals("")) {
-			if (desiredSegmentType == SegmentType.KEYWORD_CALL && !seenKeyword) {
+			if (desiredSegmentType == SegmentType.KEYWORD_CALL && !seenKeyword && isNotFirstSegment) {
 				return true;
 			} else if (desiredSegmentType == SegmentType.VARIABLE && !seenKeyword) {
 				return true;

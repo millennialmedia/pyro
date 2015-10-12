@@ -58,8 +58,12 @@ public class PyDevUtil {
 	}
 
 	public static Map<String, ModuleInfo> findAllReferencedLibraryModules(IFile sourceFile) {
-		Map<String, ModuleInfo> libraryModuleMap = new HashMap<String, ModuleInfo>();
 		List<IFile> filesVisited = new ArrayList<IFile>();
+
+		List<String> libraries = ModelUtil.getLibraries(ModelManager.getManager().getModel(sourceFile));
+		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, sourceFile);
+
+		filesVisited.add(sourceFile);
 		
 		// traverse all resource file dependencies recursively and pull in additional library references from them too
 		addTransitiveReferencedLibraryModules(libraryModuleMap, filesVisited, sourceFile);
@@ -126,8 +130,9 @@ public class PyDevUtil {
 		PythonNature nature = PythonNature.getPythonNature(project);
 		if (nature != null) {
 			IPythonPathNature pathNature = nature.getPythonPathNature();
-			
+
 			for (String libraryName : libraryNames) {
+				boolean foundModule = false;
 				try {
 					if (libraryName.contains("${CURDIR}")) {
 						ModuleInfo info = getModuleInfo(libraryName, 
@@ -135,6 +140,7 @@ public class PyDevUtil {
 								libraryName.substring(libraryName.lastIndexOf("${CURDIR}") + 9));
 						if (info != null) {
 							moduleMap.put(libraryName, info);
+							foundModule = true;
 						}
 					} else {
 						// search across the in-project source folders from the pythonpath
@@ -144,9 +150,19 @@ public class PyDevUtil {
 								ModuleInfo info = getModuleInfo(libraryName, resource.getLocation().toOSString(), libraryName);
 								if (info != null) {
 									moduleMap.put(libraryName, info);
+									foundModule = true;
 									break;
 								}
 							}
+						}
+					}
+					
+					if (!foundModule) {
+						// try searching for a library under the python installation dir
+						ModuleInfo info = findInstalledPythonLibModule(libraryName, sourceFile);
+						if (info != null) {
+							moduleMap.put(libraryName, info);
+							foundModule = true;
 						}
 					}
 
@@ -189,9 +205,39 @@ public class PyDevUtil {
 				ModuleInfo info = getModuleInfo(libraryName, standardLibPath, libraryName);
 				return info;
 			} catch (MisconfigurationException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
 			} catch (PythonNatureWithoutProjectException e) {
-				e.printStackTrace();
+				// e.printStackTrace();
+			}
+		}
+		return null;
+	}
+
+	private static ModuleInfo findInstalledPythonLibModule(String libraryName, IFile sourceFile) {
+		IProject project = sourceFile.getProject();
+
+		PythonNature nature = PythonNature.getPythonNature(project);
+		if (nature != null) {
+			try {
+				List<String> interpreterPaths = nature.getProjectInterpreter().getPythonPath();
+				String libPath = null;
+				for (String path : interpreterPaths) {
+					if (path.contains("site-packages")) {
+						File checkFile = new File(path + "/" + libraryName);
+						if (checkFile.exists()) {
+							libPath = checkFile.getCanonicalPath();
+						}
+					}
+				}
+
+				ModuleInfo info = getModuleInfo(libraryName, libPath, libraryName);
+				return info;
+			} catch (IOException e) {
+				// e.printStackTrace();
+			} catch (MisconfigurationException e) {
+				// e.printStackTrace();
+			} catch (PythonNatureWithoutProjectException e) {
+				// e.printStackTrace();
 			}
 		}
 		return null;
@@ -222,25 +268,40 @@ public class PyDevUtil {
 					return createModuleInfo(module, libraryName, pathSegments);
 				}
 			} else if (pathSegments.isEmpty()) {
-				// we didn't find a module after completely checking the full
-				// path. do one last check for
-				// a class of the correct name defined inside a package
-				// initializer
-				String initializerPath = modulePathString.substring(0, modulePathString.length() - segment.length())
-						+ "__init__.py";
+				// look for a package initializer at this location instead
+				String initializerPath = modulePathString + "/__init__.py";
 				file = new File(rootPath + "/" + initializerPath);
 				if (file.exists()) {
 					IModule module = findModule(file);
 					if (module != null) {
 						for (IToken token : module.getGlobalTokens()) {
 							if (segment.equalsIgnoreCase(token.getRepresentation())) {
-								// we've found an __init__.py package
-								// initializer that contains a class matching
-								// the library name
 								return createModuleInfo(module, libraryName, Arrays.asList(new String[] { segment }));
 							}
 						}
 					}
+				} else {
+					// we didn't find a module after completely checking the full path.
+					// do one last check for a class of the correct name defined 
+					// inside a package initializer
+					initializerPath = 
+							modulePathString.substring(0, modulePathString.length() - segment.length())
+							+ "__init__.py";
+					file = new File(rootPath + "/" + initializerPath);
+					if (file.exists()) {
+						IModule module = findModule(file);
+						if (module != null) {
+							for (IToken token : module.getGlobalTokens()) {
+								if (segment.equalsIgnoreCase(token.getRepresentation())) {
+									// we've found an __init__.py package
+									// initializer that contains a class matching
+									// the library name
+									return createModuleInfo(module, libraryName, Arrays.asList(new String[] { segment }));
+								}
+							}
+						}
+					}
+					
 				}
 			}
 		}

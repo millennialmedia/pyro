@@ -143,11 +143,20 @@ public class PyDevUtil {
 							foundModule = true;
 						}
 					} else {
+						// first try to find a module in a relative-path file
+						ModuleInfo info = getModuleInfo(libraryName, 
+								sourceFile.getLocation().removeLastSegments(1).toOSString(), 
+								libraryName);
+						if (info != null) {
+							moduleMap.put(libraryName, info);
+							foundModule = true;
+						} 
+						
 						// search across the in-project source folders from the pythonpath
-						if (pathNature != null) {
+						if (!foundModule && pathNature != null) {
 							Set<IResource> pythonResources = pathNature.getProjectSourcePathFolderSet();
 							for (IResource resource : pythonResources) {
-								ModuleInfo info = getModuleInfo(libraryName, resource.getLocation().toOSString(), libraryName);
+								info = getModuleInfo(libraryName, resource.getLocation().toOSString(), libraryName);
 								if (info != null) {
 									moduleMap.put(libraryName, info);
 									foundModule = true;

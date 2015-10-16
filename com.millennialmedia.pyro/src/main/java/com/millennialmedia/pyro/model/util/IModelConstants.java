@@ -25,7 +25,7 @@ public interface IModelConstants {
 	String[] TESTCASE_SETTINGS = { "[Documentation]", "[Tags]", "[Setup]", "[Teardown]", "[Precondition]",
 			"[Postcondition]", "[Timeout]", "[Template]" };
 
-	String[] KEYWORD_SETTINGS = { "[Documentation]", "[Arguments]", "[Return]", "[Timeout]" };
+	String[] KEYWORD_SETTINGS = { "[Documentation]", "[Tags]", "[Arguments]", "[Return]", "[Teardown]", "[Timeout]" };
 
 	String[] SETTINGS_TABLE_SETTINGS = { "Library", "Resource", "Variables", "Documentation", "Metadata",
 			"Suite Setup", "Suite Teardown", "Suite Precondition", "Suite Postcondition", "Force Tags", "Default Tags",
@@ -42,8 +42,7 @@ public interface IModelConstants {
 			"${True}",
 			"${False}",
 			"${None}",
-			// "${Null}", // omitting because it's Java-only and Pyro only has
-			// Python support
+			// "${Null}", // omitting because it's Java-only and Pyro only has Python support
 			"${SPACE}", "${EMPTY}", "@{EMPTY}", "${/}", "${:}", "${\\n}", "${CURDIR}", "${TEMPDIR}", "${EXECDIR}",
 			"${TEST NAME}", "@{TEST TAGS}", "${TEST DOCUMENTATION}", "${TEST STATUS}", "${TEST MESSAGE}",
 			"${PREV TEST NAME}", "${PREV TEST STATUS}", "${PREV TEST MESSAGE}", "${SUITE NAME}", "${SUITE SOURCE}",

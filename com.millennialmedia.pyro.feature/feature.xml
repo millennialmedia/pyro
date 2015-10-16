@@ -2,7 +2,7 @@
 <feature
       id="com.millennialmedia.pyro.feature"
       label="Pyro Feature"
-      version="1.0.2.qualifier">
+      version="1.0.3.qualifier">
 
    <description url="https://github.com/millennialmedia/pyro">
       %descriptions

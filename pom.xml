@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.millennialmedia</groupId>
   <artifactId>pyro</artifactId>
-  <version>1.0.2-SNAPSHOT</version>
+  <version>1.0.3-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Pyro</name>
   <description>Pyro Project - this parent project contains the submodules for Pyro's Eclipse plugins, tests, feature, and update site</description>

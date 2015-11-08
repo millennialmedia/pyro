@@ -10,4 +10,11 @@
   <packaging>eclipse-plugin</packaging>
   <name>Pyro UI PyDev Integration Plugin</name>
   <description>Pyro UI PyDev Integration Plugin</description>
+  <dependencies>
+  	<dependency>
+  		<groupId>com.google.guava</groupId>
+  		<artifactId>guava</artifactId>
+  		<version>18.0</version>
+  	</dependency>
+  </dependencies>
 </project>

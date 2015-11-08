@@ -1,7 +1,7 @@
 package com.millennialmedia.pyro.ui.pydev.internal.hyperlink;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.text.IRegion;
@@ -14,12 +14,12 @@ import org.python.pydev.editor.actions.PyOpenAction;
 import org.python.pydev.editor.model.ItemPointer;
 import org.python.pydev.shared_core.structure.Location;
 
+import com.google.common.collect.Multimap;
 import com.millennialmedia.pyro.model.Line;
 import com.millennialmedia.pyro.model.Step;
 import com.millennialmedia.pyro.model.Step.StepType;
 import com.millennialmedia.pyro.model.StepSegment;
 import com.millennialmedia.pyro.model.StepSegment.SegmentType;
-import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 import com.millennialmedia.pyro.ui.hyperlink.AbstractRobotHyperlinkDetector;
 import com.millennialmedia.pyro.ui.pydev.internal.ModuleInfo;
@@ -134,13 +134,14 @@ public class PythonLibraryHyperlinkDetector extends AbstractRobotHyperlinkDetect
 	}
 
 	protected ModuleInfo getModuleInfo(String libraryName) {
-		List<String> libraries = ModelUtil.getLibraries(getEditor().getModel());
-		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, PathUtil.getEditorFile(getEditor()));
-		ModuleInfo moduleInfo = libraryModuleMap.get(libraryName);
-		if (moduleInfo == null) {
-			moduleInfo = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(getEditor()));
+		Multimap<String, ModuleInfo> libraryModuleMap = PyDevUtil.getNonBuiltInLibraryModules(getEditor());
+		libraryModuleMap.putAll(PyDevUtil.getBuiltInLibraryModules(getEditor()));
+		
+		Collection<ModuleInfo> moduleInfos = libraryModuleMap.get(libraryName);
+		if (moduleInfos != null && !moduleInfos.isEmpty()) {
+			return moduleInfos.iterator().next();
 		}
-		return moduleInfo;
+		return null;
 	}
 
 	protected IHyperlink createLink(final int offset, final int length, final ModuleInfo moduleInfo,

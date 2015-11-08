@@ -20,3 +20,4 @@ Require-Bundle: org.eclipse.core.runtime,
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: com.millennialmedia.pyro.ui.pydev.internal.PyroPyDevPlugin
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Import-Package: com.google.common.collect

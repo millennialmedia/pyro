@@ -11,6 +11,7 @@
          point="com.millennialmedia.pyro.ui.contentAssistProcessor">
       <processor class="com.millennialmedia.pyro.ui.pydev.internal.contentassist.PythonUserLibraryKeywordAssistContributor" priority="7" />
       <processor class="com.millennialmedia.pyro.ui.pydev.internal.contentassist.PythonStandardLibraryKeywordAssistContributor" priority="8" />
+      <processor class="com.millennialmedia.pyro.ui.pydev.internal.contentassist.VariableFileAssistContributor" priority="25" />
    </extension>
    <extension
          point="com.millennialmedia.pyro.ui.searchPathContributor">

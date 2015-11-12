@@ -1,7 +1,6 @@
 package com.millennialmedia.pyro.ui.pydev.internal.contentassist;
 
-import com.google.common.collect.Multimap;
-import com.millennialmedia.pyro.ui.pydev.internal.ModuleInfo;
+import com.millennialmedia.pyro.ui.pydev.internal.LibraryInfo;
 import com.millennialmedia.pyro.ui.pydev.internal.PyDevUtil;
 import com.millennialmedia.pyro.ui.pydev.internal.PyroPyDevPlugin;
 
@@ -17,7 +16,7 @@ public class PythonUserLibraryKeywordAssistContributor extends AbstractPythonLib
 	}
 
 	@Override
-	public Multimap<String, ModuleInfo> getLibraryModules() {
+	public LibraryInfo getLibraryInfo() {
 		return PyDevUtil.getNonBuiltInLibraryModules(getEditor());
 	}
 

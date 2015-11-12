@@ -18,10 +18,10 @@ import org.python.pydev.editor.actions.PyOpenAction;
 import org.python.pydev.editor.model.ItemPointer;
 import org.python.pydev.shared_core.structure.Location;
 
-import com.google.common.collect.Multimap;
 import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 import com.millennialmedia.pyro.ui.hyperlink.AbstractKeywordDefinitionHyperlinkDetector;
+import com.millennialmedia.pyro.ui.pydev.internal.LibraryInfo;
 import com.millennialmedia.pyro.ui.pydev.internal.ModuleInfo;
 
 /**
@@ -36,7 +36,7 @@ public abstract class AbstractPythonLibraryKeywordDefinitionHyperlinkDetector ex
 		return false;
 	}
 
-	protected abstract Multimap<String, ModuleInfo> getLibraryModules();
+	protected abstract LibraryInfo getLibraryInfo();
 
 	public IHyperlink[] detectHyperlinks(ITextViewer textViewer, IRegion region, boolean canShowMultipleHyperlinks) {
 		final KeywordCallContext keywordCallContext = getKeywordCallContext(region);
@@ -47,7 +47,7 @@ public abstract class AbstractPythonLibraryKeywordDefinitionHyperlinkDetector ex
 		final Map<String, Integer> candidateCallStrings = 
 				ModelUtil.getCandidateKeywordStrings(keywordCallContext.getKeywordName());
 
-		Multimap<String, ModuleInfo> libraryModuleMap = getLibraryModules();
+		LibraryInfo libraryInfo = getLibraryInfo();
 
 		for (final String candidateKeywordName : candidateCallStrings.keySet()) {
 			Collection<ModuleInfo> moduleInfos = null;
@@ -55,7 +55,7 @@ public abstract class AbstractPythonLibraryKeywordDefinitionHyperlinkDetector ex
 			IToken matchingToken = null;
 			Map<IToken, ModuleInfo> tokenToModuleInfoMap = new HashMap<IToken, ModuleInfo>();
 
-			for (String libraryName : libraryModuleMap.keySet()) {
+			for (String libraryName : libraryInfo.getOrderedLibraries()) {
 				if (candidateKeywordName.contains(".")) {
 					// break into segments and look up against the module map
 					List<IToken> tokens = new CopyOnWriteArrayList<IToken>();
@@ -63,7 +63,7 @@ public abstract class AbstractPythonLibraryKeywordDefinitionHyperlinkDetector ex
 
 					if (libraryNameMatches(referencedLibraryName,
 							candidateKeywordName.substring(0, candidateKeywordName.lastIndexOf(".")))) {
-						moduleInfos = libraryModuleMap.get(libraryName);
+						moduleInfos = libraryInfo.getModuleMap().get(libraryName);
 
 						String[] segments = candidateKeywordName.split("\\.");
 						keywordName = segments[segments.length - 1];
@@ -150,7 +150,7 @@ public abstract class AbstractPythonLibraryKeywordDefinitionHyperlinkDetector ex
 				} else {
 					// plain keyword without module qualifiers, search across
 					// libraries in referenced order
-					moduleInfos = libraryModuleMap.get(libraryName);
+					moduleInfos = libraryInfo.getModuleMap().get(libraryName);
 					keywordName = candidateKeywordName;
 					List<IToken> tokens = new CopyOnWriteArrayList<IToken>();
 

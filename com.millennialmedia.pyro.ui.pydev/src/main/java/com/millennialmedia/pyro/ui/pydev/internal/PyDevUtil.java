@@ -32,8 +32,6 @@ import org.python.pydev.plugin.PydevPlugin;
 import org.python.pydev.plugin.nature.PythonNature;
 import org.python.pydev.shared_core.structure.Tuple;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.millennialmedia.pyro.model.ModelManager;
 import com.millennialmedia.pyro.model.RobotModel;
 import com.millennialmedia.pyro.model.util.ModelUtil;
@@ -46,8 +44,8 @@ import com.millennialmedia.pyro.ui.editor.util.PathUtil;
  * @author spaxton
  */
 public class PyDevUtil {
-	private static final String PROPSKEY_NON_BUILTIN_MODULEMAP_CACHE = "PYDEV_NON_BUILTIN_MODULE_MAP_CACHE";
-	private static final String PROPSKEY_BUILTIN_MODULEMAP_CACHE = "PYDEV_BUILTIN_MODULE_MAP_CACHE";
+	private static final String PROPSKEY_NON_BUILTIN_LIBRARY_INFO_CACHE = "PYDEV_NON_BUILTIN_MODULE_MAP_CACHE";
+	private static final String PROPSKEY_BUILTIN_LIBRARY_INFO_CACHE = "PYDEV_BUILTIN_MODULE_MAP_CACHE";
 	
 	private static List<String> standardLibsList = Arrays.asList(new String[] { 
 		"BuiltIn", 
@@ -67,75 +65,78 @@ public class PyDevUtil {
 	 * Framework's built-in standard libraries, which can be separately retrieved from
 	 * getBuiltInLibraryModules() 
 	 */
-	@SuppressWarnings("unchecked")
-	public static Multimap<String, ModuleInfo> getNonBuiltInLibraryModules(RobotFrameworkEditor editor) {
+	public static LibraryInfo getNonBuiltInLibraryModules(RobotFrameworkEditor editor) {
 		// first try to retrieve a cached module map from the robot model.
 		// any editing changes at all (including changing library references) will force
 		// a model re-parse, so the cache can never be stale unless the pythonpath was 
 		// changed.  in that case a simple close/reopen or single character change in the
 		// editor will catch up, so I will skip extra listener/notification code here 
 		RobotModel model = editor.getModel();
-		Multimap<String, ModuleInfo> cachedMap = (Multimap<String, ModuleInfo>) model.getCustomProperties().get(PROPSKEY_NON_BUILTIN_MODULEMAP_CACHE);
-		if (cachedMap != null) {
-			return cachedMap;
+		LibraryInfo cachedInfo = (LibraryInfo) model.getCustomProperties().get(PROPSKEY_NON_BUILTIN_LIBRARY_INFO_CACHE);
+		if (cachedInfo != null) {
+			return cachedInfo;
 		}
 		
 		IFile sourceFile = PathUtil.getEditorFile(editor);
 		List<IFile> filesVisited = new ArrayList<IFile>();
 
-		// load all the library modules directly referenced from the source file
+		// load all the library modules directly referenced from the source file, excluding any built-in robot libs
 		List<String> libraries = ModelUtil.getLibraries(ModelManager.getManager().getModel(sourceFile));
-		Multimap<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, sourceFile);
+		libraries.removeAll(standardLibsList);
+		
+		LibraryInfo libraryInfo = new LibraryInfo();
+		PyDevUtil.findModules(libraries, sourceFile, libraryInfo);
 
 		filesVisited.add(sourceFile);
 		
 		// traverse all resource file dependencies recursively and pull in additional library references from them too
-		addTransitiveReferencedLibraryModules(libraryModuleMap, filesVisited, sourceFile);
+		addTransitiveReferencedLibraryModules(libraryInfo, filesVisited, sourceFile);
 
 		// cache for subsequent requests
-		model.getCustomProperties().put(PROPSKEY_NON_BUILTIN_MODULEMAP_CACHE, libraryModuleMap);
-		return libraryModuleMap;
+		model.getCustomProperties().put(PROPSKEY_NON_BUILTIN_LIBRARY_INFO_CACHE, libraryInfo);
+		return libraryInfo;
 	}
 	
 	/**
 	 * Collects and returns a module map for any standard Robot Framework libraries that are
 	 * referenced by the current editor's file. 
 	 */
-	@SuppressWarnings("unchecked")
-	public static Multimap<String, ModuleInfo> getBuiltInLibraryModules(RobotFrameworkEditor editor) {
+	public static LibraryInfo getBuiltInLibraryModules(RobotFrameworkEditor editor) {
 		RobotModel model = editor.getModel();
-		Multimap<String, ModuleInfo> cachedMap = (Multimap<String, ModuleInfo>) model.getCustomProperties().get(PROPSKEY_BUILTIN_MODULEMAP_CACHE);
-		if (cachedMap != null) {
-			return cachedMap;
+		LibraryInfo cachedLibraryInfo = (LibraryInfo) model.getCustomProperties().get(PROPSKEY_BUILTIN_LIBRARY_INFO_CACHE);
+		if (cachedLibraryInfo != null) {
+			return cachedLibraryInfo;
 		}
 
-		Multimap<String, ModuleInfo> moduleMap = ArrayListMultimap.create();
 		
 		List<String> referencedLibraries = PyDevUtil.getReferencedLibraries(PathUtil.getEditorFile(editor));
 		referencedLibraries.add("BuiltIn");
 
+		LibraryInfo libraryInfo = new LibraryInfo();
+		
 		for (String libraryName : referencedLibraries) {
 			if (!standardLibsList.contains(libraryName)) {
 				continue;
 			}
 
+			libraryInfo.getOrderedLibraries().add(libraryName);
 			List<ModuleInfo> moduleInfos = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(editor));
 			if (moduleInfos != null) {
-				moduleMap.putAll(libraryName, moduleInfos);
+				libraryInfo.getModuleMap().putAll(libraryName, moduleInfos);
 			}
 		}
 
 		// cache for subsequent requests
-		model.getCustomProperties().put(PROPSKEY_BUILTIN_MODULEMAP_CACHE, moduleMap);
-		return moduleMap;
+		model.getCustomProperties().put(PROPSKEY_BUILTIN_LIBRARY_INFO_CACHE, libraryInfo);
+		return libraryInfo;
 	}
 	
-	private static void addTransitiveReferencedLibraryModules(Multimap<String, ModuleInfo> libraryModuleMap, List<IFile> filesVisited, IFile referencedFile) {
+	private static void addTransitiveReferencedLibraryModules(LibraryInfo libraryInfo, List<IFile> filesVisited, IFile referencedFile) {
 		// add library references from the local file
 		List<String> libraries = ModelUtil.getLibraries(ModelManager.getManager().getModel(referencedFile));
-		Multimap<String, ModuleInfo> additionalLibrariesModuleMap = PyDevUtil.findModules(libraries, referencedFile);
+		libraries.removeAll(standardLibsList);
 
-		libraryModuleMap.putAll(additionalLibrariesModuleMap);
+		PyDevUtil.findModules(libraries, referencedFile, libraryInfo);
 
 		filesVisited.add(referencedFile);
 		
@@ -149,7 +150,7 @@ public class PyDevUtil {
 				IFile targetFile = (IFile) resource;
 				// avoid cycles, but otherwise recursively add additional library modules
 				if (!filesVisited.contains(targetFile)) {
-					addTransitiveReferencedLibraryModules(libraryModuleMap, filesVisited, targetFile);
+					addTransitiveReferencedLibraryModules(libraryInfo, filesVisited, targetFile);
 				}
 			}
 		}
@@ -182,15 +183,20 @@ public class PyDevUtil {
 		}
 	}
 	
-	private static Multimap<String, ModuleInfo> findModules(List<String> libraryNames, IFile sourceFile) {
+	public static LibraryInfo findModules(List<String> libraryNames, IFile sourceFile) {
+		LibraryInfo libraryInfo = new LibraryInfo();
+		return findModules(libraryNames, sourceFile, libraryInfo);
+	}
+
+	public static LibraryInfo findModules(List<String> libraryNames, IFile sourceFile, LibraryInfo libraryInfo) {
 		IProject project = sourceFile.getProject();
 
-		Multimap<String, ModuleInfo> moduleMap = ArrayListMultimap.create();
 		PythonNature nature = PythonNature.getPythonNature(project);
 		if (nature != null) {
 			IPythonPathNature pathNature = nature.getPythonPathNature();
 
 			for (String libraryName : libraryNames) {
+				libraryInfo.getOrderedLibraries().add(libraryName);
 				boolean foundModule = false;
 				ModuleInfo info = null;
 				try {
@@ -199,7 +205,7 @@ public class PyDevUtil {
 								sourceFile.getLocation().removeLastSegments(1).toOSString(), 
 								libraryName.substring(libraryName.lastIndexOf("${CURDIR}") + 9));
 						if (info != null) {
-							moduleMap.put(libraryName, info);
+							libraryInfo.getModuleMap().put(libraryName, info);
 							foundModule = true;
 						}
 					} else {
@@ -208,7 +214,7 @@ public class PyDevUtil {
 								sourceFile.getLocation().removeLastSegments(1).toOSString(), 
 								libraryName);
 						if (info != null) {
-							moduleMap.put(libraryName, info);
+							libraryInfo.getModuleMap().put(libraryName, info);
 							foundModule = true;
 						} 
 						
@@ -218,7 +224,7 @@ public class PyDevUtil {
 							for (IResource resource : pythonResources) {
 								info = getModuleInfo(libraryName, resource.getLocation().toOSString(), libraryName);
 								if (info != null) {
-									moduleMap.put(libraryName, info);
+									libraryInfo.getModuleMap().put(libraryName, info);
 									foundModule = true;
 									break;
 								}
@@ -230,21 +236,20 @@ public class PyDevUtil {
 						// try searching for a library under the python installation dir
 						info = findInstalledPythonLibModule(libraryName, sourceFile);
 						if (info != null) {
-							moduleMap.put(libraryName, info);
+							libraryInfo.getModuleMap().put(libraryName, info);
 							foundModule = true;
 						}
 					}
 					
 					if (info != null) {
-						moduleMap.putAll(libraryName, collectBaseClassModules(info));
+						libraryInfo.getModuleMap().putAll(libraryName, collectBaseClassModules(info));
 					}
 				} catch (CoreException e) {
-					e.printStackTrace();
 				}
 			}
 		}
 
-		return moduleMap;
+		return libraryInfo;
 	}
 
 	private static List<ModuleInfo> findStandardLibModule(String libraryName, IFile sourceFile) {

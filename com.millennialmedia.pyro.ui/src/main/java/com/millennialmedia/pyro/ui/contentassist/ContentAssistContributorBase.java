@@ -206,7 +206,12 @@ public class ContentAssistContributorBase extends AbstractEditorAwareContributor
 							} else if (segment.getSegmentType() == SegmentType.LOOP_CONSTRUCT) {
 								return false;
 							} else if (segment.getSegmentType() == SegmentType.SETTING_NAME) {
-								return false;
+								if (!("[Setup]".equalsIgnoreCase(segment.getValue()) ||
+										"[Teardown]".equalsIgnoreCase(segment.getValue()) ||
+										"[Precondition]".equalsIgnoreCase(segment.getValue()) ||
+										"[Postcondition]".equalsIgnoreCase(segment.getValue()))) {
+									return false;
+								}
 							}
 						}
 

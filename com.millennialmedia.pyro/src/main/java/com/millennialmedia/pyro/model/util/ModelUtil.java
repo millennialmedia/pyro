@@ -47,10 +47,18 @@ public class ModelUtil {
 		return keywordsMap;
 	}
 
-	@SuppressWarnings("unchecked")
 	public static List<String> getResourceFilePaths(RobotModel model) {
-		if (model.getCustomProperties().containsKey(IModelConstants.PROPSKEY_RESOURCE_FILE_PATHS)) {
-			return (List<String>) model.getCustomProperties().get(IModelConstants.PROPSKEY_RESOURCE_FILE_PATHS);
+		return getSettingFilePaths(model, "Resource", IModelConstants.PROPSKEY_RESOURCE_FILE_PATHS);
+	}
+
+	public static List<String> getVariableFilePaths(RobotModel model) {
+		return getSettingFilePaths(model, "Variables", IModelConstants.PROPSKEY_VARIABLE_FILE_PATHS);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static List<String> getSettingFilePaths(RobotModel model, String settingName, String cachePropertyName) {
+		if (model.getCustomProperties().containsKey(cachePropertyName)) {
+			return (List<String>) model.getCustomProperties().get(cachePropertyName);
 		}
 
 		List<String> paths = new ArrayList<String>();
@@ -59,14 +67,14 @@ public class ModelUtil {
 				for (Line line : table.getTableLines()) {
 					Step step = (Step) line;
 					if (step.getStepType() == StepType.SETTING) {
-						boolean foundResourceSetting = false;
+						boolean foundDesiredSetting = false;
 						for (StepSegment seg : step.getSegments()) {
-							if (seg.getSegmentType() == SegmentType.SETTING_NAME && "Resource".equals(seg.getValue())) {
-								foundResourceSetting = true;
+							if (seg.getSegmentType() == SegmentType.SETTING_NAME && settingName.equals(seg.getValue())) {
+								foundDesiredSetting = true;
 								continue;
 							}
 
-							if (foundResourceSetting && seg.getValue() != null && !"".equals(seg.getValue())) {
+							if (foundDesiredSetting && seg.getValue() != null && !"".equals(seg.getValue())) {
 								paths.add(seg.getValue());
 								break;
 							}
@@ -75,7 +83,7 @@ public class ModelUtil {
 				}
 			}
 		}
-		model.getCustomProperties().put(IModelConstants.PROPSKEY_RESOURCE_FILE_PATHS, paths);
+		model.getCustomProperties().put(cachePropertyName, paths);
 		return paths;
 	}
 

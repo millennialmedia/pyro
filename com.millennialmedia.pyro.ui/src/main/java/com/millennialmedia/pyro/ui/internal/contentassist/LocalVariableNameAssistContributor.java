@@ -1,7 +1,6 @@
 package com.millennialmedia.pyro.ui.internal.contentassist;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -26,38 +25,33 @@ import com.millennialmedia.pyro.model.TableItemDefinition.TableItemType;
 import com.millennialmedia.pyro.model.util.IModelConstants;
 import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.PyroUIPlugin;
-import com.millennialmedia.pyro.ui.contentassist.ContentAssistContributorBase;
 import com.millennialmedia.pyro.ui.contentassist.RobotCompletionProposal;
+import com.millennialmedia.pyro.ui.contentassist.VariableNameAssistContributorBase;
 import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 
 /**
- * A single contributor to handle assist for variables inserted into argument
- * cells or added as the left-hand side of a variable assignment. Note that 
- * unlike other contributions, variable assist is implemented in a single larger 
- * class because all of the sources for candidate variables are found within the 
- * same local file.
- * 
- * If Pyro was ever to support external variable files, that might mean
- * splitting this class up to do local variables first, then another contributor
- * of lower priority to handle the variable file(s), and then a third to propose
- * the built-in Robot vars (thus removing them from the end of this class's
- * proposals).
+ * A  contributor to handle assist for variables inserted into argument
+ * cells or added as the left-hand side of a variable assignment. This
+ * contributor handles locally-defined variables within the same robot
+ * source file. 
  * 
  * @author spaxton
  */
-public class VariableNameAssistContributor extends ContentAssistContributorBase {
+public class LocalVariableNameAssistContributor extends VariableNameAssistContributorBase {
 	private Pattern SCALAR_PATTERN = Pattern.compile("\\$\\{[^\\{]*\\}");
 	private Pattern LIST_PATTERN = Pattern.compile("\\@\\{[^\\{]*\\}");
 	private Pattern ENV_PATTERN = Pattern.compile("\\%\\{[^\\{]*\\}");
 
+	public LocalVariableNameAssistContributor() {
+		setProposalImage(PyroUIPlugin.getDefault().getImageRegistry().get(PyroUIPlugin.IMAGE_VARIABLE));
+	}
+	
 	@Override
 	public void computeCompletionProposals(ITextViewer viewer, int offset, List<RobotCompletionProposal> proposals) {
 		String variableBeginning = extractVariableBeginning(offset, viewer);
 		if (variableBeginning == null) {
 			return;
 		}
-
-		setProposalImage(PyroUIPlugin.getDefault().getImageRegistry().get(PyroUIPlugin.IMAGE_VARIABLE));
 
 		// add assist proposals in sequence according to the following
 		// scenarios:
@@ -83,10 +77,6 @@ public class VariableNameAssistContributor extends ContentAssistContributorBase 
 
 		// global test variables from external resource files
 		handleVariableTableVarsFromResourceFiles(offset, variableBeginning, proposals);
-
-		// Robot built-in variables
-		setProposalImage(PyroUIPlugin.getDefault().getImageRegistry().get(PyroUIPlugin.IMAGE_ROBOT));
-		handleBuiltInVariables(offset, variableBeginning, proposals);
 	}
 
 	private void handleKeywordArguments(int offset, String variableBeginning, List<RobotCompletionProposal> proposals) {
@@ -322,52 +312,6 @@ public class VariableNameAssistContributor extends ContentAssistContributorBase 
 				}
 			}
 		}
-	}
-
-	private void handleBuiltInVariables(int offset, String variableBeginning, List<RobotCompletionProposal> proposals) {
-		List<String> varNames = Arrays.asList(IModelConstants.BUILT_IN_VARIABLES);
-		// do not sort, they've already been ordered in related groupings
-		createProposals(varNames, offset, variableBeginning, proposals);
-	}
-
-	private void createProposals(List<String> varNames, int offset, String variableBeginning,
-			List<RobotCompletionProposal> proposals) {
-		for (String varName : varNames) {
-			if (varName.startsWith(variableBeginning)) {
-				addCompletionProposal(proposals, varName, offset - variableBeginning.length(),
-						variableBeginning.length(), varName.length(), varName, null);
-			}
-		}
-	}
-
-	private String extractVariableBeginning(int offset, ITextViewer viewer) {
-		// first see if we're in an argument cell
-		String[] variableFragments = getStringFragments(offset, SegmentType.ARGUMENT, viewer);
-		if (variableFragments == null && isPotentialEmptyStepSegment(offset, SegmentType.ARGUMENT)) {
-			variableFragments = new String[] { "", "" };
-		}
-		
-		// now check if this may be a variable assignment instead
-		if (variableFragments == null) {
-			variableFragments = getStringFragments(offset, SegmentType.VARIABLE, viewer);
-			if (variableFragments == null && isPotentialEmptyStepSegment(offset, SegmentType.VARIABLE)) {
-				variableFragments = new String[] { "", "" };
-			}
-		}
-
-		if (variableFragments != null) {
-			String extractedVariableBeginning = variableFragments[0];
-			int lastScalar = extractedVariableBeginning.lastIndexOf("$");
-			int lastList = extractedVariableBeginning.lastIndexOf("@");
-			int startIndex = Math.max(lastScalar, lastList);
-			if (startIndex > -1) {
-				extractedVariableBeginning = extractedVariableBeginning.substring(startIndex);
-			} else {
-				extractedVariableBeginning = "";
-			}
-			return extractedVariableBeginning;
-		}
-		return null;
 	}
 
 }

@@ -1,7 +1,7 @@
 package com.millennialmedia.pyro.ui.pydev.internal.hyperlink;
 
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.text.IRegion;
@@ -19,15 +19,16 @@ import com.millennialmedia.pyro.model.Step;
 import com.millennialmedia.pyro.model.Step.StepType;
 import com.millennialmedia.pyro.model.StepSegment;
 import com.millennialmedia.pyro.model.StepSegment.SegmentType;
-import com.millennialmedia.pyro.model.util.ModelUtil;
 import com.millennialmedia.pyro.ui.editor.util.PathUtil;
 import com.millennialmedia.pyro.ui.hyperlink.AbstractRobotHyperlinkDetector;
+import com.millennialmedia.pyro.ui.pydev.internal.LibraryInfo;
 import com.millennialmedia.pyro.ui.pydev.internal.ModuleInfo;
 import com.millennialmedia.pyro.ui.pydev.internal.PyDevUtil;
+import com.millennialmedia.pyro.ui.pydev.internal.contentassist.VariableFileAssistContributor;
 
 /**
  * Hyperlink detector for external Python libraries referenced by the Library
- * setting in Robot source files.
+ * setting or Variables setting in Robot source files.
  * 
  * @author spaxton
  */
@@ -71,8 +72,9 @@ public class PythonLibraryHyperlinkDetector extends AbstractRobotHyperlinkDetect
 			if (line instanceof Step && ((Step) line).getStepType() == StepType.SETTING) {
 				int lineOffset = line.getLineOffset();
 				for (StepSegment segment : ((Step) line).getSegments()) {
-					if (segment.getSegmentType() == SegmentType.SETTING_NAME
-							&& !segment.getValue().equalsIgnoreCase("Library")) {
+					if (segment.getSegmentType() == SegmentType.SETTING_NAME && 
+							!(segment.getValue().equalsIgnoreCase("Library") ||
+							segment.getValue().equalsIgnoreCase("Variables"))) {
 						return null;
 					}
 					if (segment.getSegmentType() == SegmentType.SETTING_VALUE
@@ -134,13 +136,22 @@ public class PythonLibraryHyperlinkDetector extends AbstractRobotHyperlinkDetect
 	}
 
 	protected ModuleInfo getModuleInfo(String libraryName) {
-		List<String> libraries = ModelUtil.getLibraries(getEditor().getModel());
-		Map<String, ModuleInfo> libraryModuleMap = PyDevUtil.findModules(libraries, PathUtil.getEditorFile(getEditor()));
-		ModuleInfo moduleInfo = libraryModuleMap.get(libraryName);
-		if (moduleInfo == null) {
-			moduleInfo = PyDevUtil.findStandardLibModule(libraryName, PathUtil.getEditorFile(getEditor()));
+		LibraryInfo libraryInfo = PyDevUtil.getNonBuiltInLibraryModules(getEditor());
+		
+		LibraryInfo builtInLibraryInfo = PyDevUtil.getBuiltInLibraryModules(getEditor());
+		libraryInfo.getOrderedLibraries().addAll(builtInLibraryInfo.getOrderedLibraries());
+		libraryInfo.getModuleMap().putAll(builtInLibraryInfo.getModuleMap());
+		
+		List<String> variableFilePaths = VariableFileAssistContributor.collectReferencedVariableFilePaths(getEditor());
+		LibraryInfo variableFilesLibraryInfo = PyDevUtil.findModules(variableFilePaths, PathUtil.getEditorFile(getEditor()));
+		libraryInfo.getOrderedLibraries().addAll(variableFilesLibraryInfo.getOrderedLibraries());
+		libraryInfo.getModuleMap().putAll(variableFilesLibraryInfo.getModuleMap());
+		
+		Collection<ModuleInfo> moduleInfos = libraryInfo.getModuleMap().get(libraryName);
+		if (moduleInfos != null && !moduleInfos.isEmpty()) {
+			return moduleInfos.iterator().next();
 		}
-		return moduleInfo;
+		return null;
 	}
 
 	protected IHyperlink createLink(final int offset, final int length, final ModuleInfo moduleInfo,

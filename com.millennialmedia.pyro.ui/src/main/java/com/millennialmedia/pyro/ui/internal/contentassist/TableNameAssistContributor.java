@@ -29,8 +29,10 @@ public class TableNameAssistContributor extends ContentAssistContributorBase {
 		String lineContents = viewer.getTextWidget().getLine(lineNum);
 		String textBeforeCaret = lineContents.substring(0, offset - offsetAtLine);
 
-		if (textBeforeCaret != null
-				&& (textBeforeCaret.startsWith("*") || ("".equals(textBeforeCaret.trim()) && !textBeforeCaret.contains("\t")))) {
+		if (textBeforeCaret != null &&
+				(textBeforeCaret.startsWith("*") || 
+				("".equals(textBeforeCaret.trim()) && 
+				(!textBeforeCaret.contains("\t") && !textBeforeCaret.contains("  "))))) {
 			String tableNameBeginning = lineContents.substring(0,
 					offset - viewer.getTextWidget().getOffsetAtLine(lineNum));
 			tableNameBeginning = tableNameBeginning.replace("*", "").trim();
